@@ -81,6 +81,10 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
         dict: Result with 'success', 'data', 'error', 'stats' keys
     """
     try:
+        # Import required modules at the top
+        import json
+        import yaml
+        
         # Debug: Log template info (can be removed later)
         # template_lines = template_text.split('\\n')
         # print(f"TTP Debug: Template has {len(template_lines)} lines")
@@ -91,10 +95,8 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
         if global_vars_text and global_vars_text.strip():
             try:
                 if global_vars_format == 'json':
-                    import json
                     global_vars_dict = json.loads(global_vars_text)
                 elif global_vars_format == 'yaml':
-                    import yaml
                     global_vars_dict = yaml.safe_load(global_vars_text)
                 elif global_vars_format == 'python':
                     # Evaluate Python dict string
@@ -121,8 +123,8 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
         results = parser.result()
         
         # TTP returns results in nested arrays like [[{data}]]
-        # Extract the actual data from the first group
-        actual_data = results[0] if results and len(results) > 0 else []
+        # Use all results instead of just the first group
+        actual_data = results if results else []
         
         # Format output based on requested format
         if output_format == 'yaml':
@@ -133,9 +135,18 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
             formatted_data = json.dumps(actual_data, indent=2, ensure_ascii=False)
         
         # Calculate some basic stats
+        # Count total items across all result groups
+        total_items = 0
+        if results:
+            for group in results:
+                if isinstance(group, list):
+                    total_items += len(group)
+                else:
+                    total_items += 1
+        
         stats = {
             'template_groups': len([line for line in template_text.split('\\n') if '<group' in line]),
-            'parsed_items': len(results[0]) if results and len(results) > 0 and isinstance(results[0], list) else (1 if results else 0),
+            'parsed_items': total_items,
             'data_lines': len([line for line in data_text.split('\\n') if line.strip()])
         }
         
