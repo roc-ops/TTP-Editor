@@ -551,15 +551,23 @@ body {
     display: none;
 }
 
-/* Error marker styling for CodeMirror 6 */
-.cm-error-marker {
-    background-color: rgba(255, 0, 0, 0.1);
-    border-left: 3px solid #ff4444;
-    padding-left: 2px;
+/* Error marker styling for Monaco Editor */
+.monaco-error-line {
+    background-color: rgba(255, 68, 68, 0.1) !important;
+    border-left: 3px solid #ff4444 !important;
 }
 
-.cm-error-marker:hover {
-    background-color: rgba(255, 0, 0, 0.2);
+.monaco-error-glyph {
+    background-color: #ff4444 !important;
+    color: white !important;
+    border-radius: 50% !important;
+    width: 16px !important;
+    height: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
 }
 
 /* Template pane error indicator */

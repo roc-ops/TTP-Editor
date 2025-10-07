@@ -1,11 +1,11 @@
 class TTPEditor {
     constructor() {
-        console.log('Initializing TTP Editor...');
+        console.log('Initializing TTP Editor with Monaco Editor...');
         
         this.elements = {};
         this.ttpProcessor = null;
         
-        // CodeMirror 6 editors
+        // Monaco editors
         this.dataEditor = null;
         this.templateEditor = null;
         this.resultEditor = null;
@@ -30,11 +30,11 @@ class TTPEditor {
     async init() {
         console.log('TTP Editor init started');
         
-        // Wait for CodeMirror 6 to load
-        while (!window.CodeMirror6) {
+        // Wait for Monaco Editor to load
+        while (!window.MonacoEditor) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
-        console.log('CodeMirror 6 available');
+        console.log('Monaco Editor available');
         
         this.setupUI();
         this.setupEventListeners();
@@ -96,131 +96,84 @@ class TTPEditor {
     }
 
     async setupCodeEditors() {
-        const { EditorView, EditorState, basicSetup, python, oneDark, searchKeymap, highlightSelectionMatches, keymap } = window.CodeMirror6;
-        
         // Data input editor
-        const dataState = EditorState.create({
-            doc: this.elements.dataInput.value || '',
-            extensions: [
-                basicSetup,
-                python(),
-                oneDark,
-                highlightSelectionMatches(),
-                keymap.of(searchKeymap),
-                EditorView.theme({
-                    "&": { height: "100%" },
-                    ".cm-scroller": { overflow: "auto" }
-                }),
-                EditorView.updateListener.of((update) => {
-                    if (update.docChanged) {
-                        this.validateInputs();
-                        this.scheduleAutoProcess();
-                    }
-                })
-            ]
+        this.dataEditor = window.MonacoEditor.create(this.elements.dataInput.parentElement, {
+            value: this.elements.dataInput.value || '',
+            language: 'python',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            lineNumbers: 'on',
+            folding: true,
+            renderWhitespace: 'selection',
+            fontSize: 13,
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace'
         });
-        
-        this.dataEditor = new EditorView({
-            state: dataState,
-            parent: this.elements.dataInput.parentElement
-        });
-        
+
         // Hide original textarea
         this.elements.dataInput.style.display = 'none';
 
         // Template editor
-        const templateState = EditorState.create({
-            doc: this.elements.templateInput.value || '',
-            extensions: [
-                basicSetup,
-                python(),
-                oneDark,
-                highlightSelectionMatches(),
-                keymap.of(searchKeymap),
-                EditorView.theme({
-                    "&": { height: "100%" },
-                    ".cm-scroller": { overflow: "auto" }
-                }),
-                EditorView.updateListener.of((update) => {
-                    if (update.docChanged) {
-                        this.validateInputs();
-                        this.scheduleAutoProcess();
-                    }
-                })
-            ]
+        this.templateEditor = window.MonacoEditor.create(this.elements.templateInput.parentElement, {
+            value: this.elements.templateInput.value || '',
+            language: 'python',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            lineNumbers: 'on',
+            folding: true,
+            renderWhitespace: 'selection',
+            fontSize: 13,
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace'
         });
-        
-        this.templateEditor = new EditorView({
-            state: templateState,
-            parent: this.elements.templateInput.parentElement
-        });
-        
+
         // Hide original textarea
         this.elements.templateInput.style.display = 'none';
+
+        // Add change listeners
+        this.dataEditor.onDidChangeModelContent(() => {
+            this.validateInputs();
+            this.scheduleAutoProcess();
+        });
+
+        this.templateEditor.onDidChangeModelContent(() => {
+            this.validateInputs();
+            this.scheduleAutoProcess();
+        });
     }
 
     setupResultEditor() {
-        const { EditorView, EditorState, basicSetup, json, oneDark, foldGutter, foldKeymap, keymap, searchKeymap, highlightSelectionMatches } = window.CodeMirror6;
-        
         // Clear the result output div first
         this.elements.resultOutput.innerHTML = '';
         
-        // Custom extension to prevent editing but allow search
-        const readOnlyExtension = EditorView.domEventHandlers({
-            beforeinput: (event, view) => {
-                // Allow search-related events but prevent content changes
-                if (event.inputType === 'insertText' || 
-                    event.inputType === 'insertCompositionText' ||
-                    event.inputType === 'deleteContentBackward' ||
-                    event.inputType === 'deleteContentForward') {
-                    event.preventDefault();
-                    return true;
-                }
-                return false;
-            },
-            keydown: (event, view) => {
-                // Allow search shortcuts and navigation
-                if (event.ctrlKey || event.metaKey) {
-                    if (event.key === 'f' || event.key === 'g' || event.key === 'h') {
-                        return false; // Allow search shortcuts
-                    }
-                }
-                // Allow arrow keys, page up/down, home, end for navigation
-                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
-                    return false;
-                }
-                // Prevent other key inputs that would modify content
-                if (event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Enter') {
-                    event.preventDefault();
-                    return true;
-                }
-                return false;
+        // Setup result editor with Monaco for better display and search
+        this.resultEditor = window.MonacoEditor.create(this.elements.resultOutput, {
+            value: 'Results will appear here after processing...',
+            language: 'json',
+            theme: 'vs-dark',
+            readOnly: true,
+            automaticLayout: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            lineNumbers: 'on',
+            folding: true,
+            renderWhitespace: 'selection',
+            fontSize: 13,
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+            // Enable search functionality
+            find: {
+                addExtraSpaceOnTop: false,
+                autoFindInSelection: 'never',
+                seedSearchStringFromSelection: 'never'
             }
         });
         
-        // Setup result editor with CodeMirror 6 for better display and folding
-        const resultState = EditorState.create({
-            doc: 'Results will appear here after processing...',
-            extensions: [
-                basicSetup,
-                json(), // Use JSON mode for better folding
-                oneDark,
-                highlightSelectionMatches(),
-                keymap.of([...foldKeymap, ...searchKeymap]), // Add fold and search keyboard shortcuts
-                readOnlyExtension, // Custom read-only extension that allows search
-                EditorView.theme({
-                    "&": { height: "100%" },
-                    ".cm-scroller": { overflow: "auto" }
-                })
-            ]
-        });
-        
-        this.resultEditor = new EditorView({
-            state: resultState,
-            parent: this.elements.resultOutput
-        });
-        
-        console.log('CodeMirror 6 result editor initialized with JSON folding and search support');
+        console.log('Monaco result editor initialized with JSON folding and search support');
     }
 
     setupEventListeners() {
@@ -305,8 +258,6 @@ class TTPEditor {
         if (this.varsEditor) {
             return; // Already initialized
         }
-
-        const { EditorView, EditorState, basicSetup, json, yaml, python, oneDark } = window.CodeMirror6;
         
         // Default JSON content
         const defaultContent = `{
@@ -315,20 +266,18 @@ class TTPEditor {
   "timezone": "UTC"
 }`;
 
-        this.varsEditor = new EditorView({
-            state: EditorState.create({
-                doc: defaultContent,
-                extensions: [
-                    basicSetup,
-                    json(),
-                    oneDark,
-                    EditorView.theme({
-                        "&": { height: "100%" },
-                        ".cm-scroller": { overflow: "auto" }
-                    })
-                ]
-            }),
-            parent: this.elements.varsEditor
+        this.varsEditor = window.MonacoEditor.create(this.elements.varsEditor, {
+            value: defaultContent,
+            language: 'json',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            lineNumbers: 'on',
+            folding: true,
+            fontSize: 13,
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace'
         });
     }
 
@@ -473,7 +422,7 @@ class TTPEditor {
 
         this.elements.functionsContainer.appendChild(container);
 
-        // Initialize CodeMirror editor for this function
+        // Initialize Monaco editor for this function
         this.initializeFunctionEditor(func.id, func.code || '');
 
         // Add event listeners for remove button
@@ -485,25 +434,22 @@ class TTPEditor {
     }
 
     initializeFunctionEditor(functionId, code) {
-        const { EditorView, EditorState, basicSetup, python, oneDark } = window.CodeMirror6;
         const editorContainer = document.querySelector(`[data-function-id="${functionId}"]`);
 
         if (!editorContainer) return;
 
-        const editor = new EditorView({
-            state: EditorState.create({
-                doc: code,
-                extensions: [
-                    basicSetup,
-                    python(),
-                    oneDark,
-                    EditorView.theme({
-                        "&": { height: "200px" },
-                        ".cm-scroller": { overflow: "auto" }
-                    })
-                ]
-            }),
-            parent: editorContainer
+        const editor = window.MonacoEditor.create(editorContainer, {
+            value: code,
+            language: 'python',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            lineNumbers: 'on',
+            folding: true,
+            fontSize: 13,
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace'
         });
 
         this.functionEditors.set(functionId, editor);
@@ -540,7 +486,7 @@ class TTPEditor {
             // Get code from editor
             let code = '';
             if (this.functionEditors.has(func.id)) {
-                code = this.functionEditors.get(func.id).state.doc.toString();
+                code = this.functionEditors.get(func.id).getValue();
             }
 
             if (scope && code.trim()) {
@@ -711,7 +657,7 @@ class TTPEditor {
 
         this.elements.lookupsContainer.appendChild(container);
 
-        // Initialize CodeMirror editor for this lookup
+        // Initialize Monaco editor for this lookup
         this.initializeLookupEditor(lookup.id, lookup.textData || '', lookup.load);
 
         // Add event listeners
@@ -729,42 +675,39 @@ class TTPEditor {
     }
 
     initializeLookupEditor(lookupId, textData, loadFormat) {
-        const { EditorView, EditorState, basicSetup, json, yaml, python, oneDark } = window.CodeMirror6;
         const editorContainer = document.querySelector(`[data-lookup-id="${lookupId}"]`);
 
         if (!editorContainer) return;
 
-        // Choose language extension based on load format
-        let languageExtension;
+        // Choose language based on load format
+        let language;
         switch (loadFormat) {
             case 'json':
-                languageExtension = json();
+                language = 'json';
                 break;
             case 'yaml':
-                languageExtension = yaml();
+                language = 'yaml';
                 break;
             case 'python':
             case 'csv':
             case 'ini':
             default:
-                languageExtension = python(); // Use python for python dict format, plain for others
+                language = 'python'; // Use python for python dict format, plain for others
                 break;
         }
 
-        const editor = new EditorView({
-            state: EditorState.create({
-                doc: textData,
-                extensions: [
-                    basicSetup,
-                    languageExtension,
-                    oneDark,
-                    EditorView.theme({
-                        "&": { height: "200px" },
-                        ".cm-scroller": { overflow: "auto" }
-                    })
-                ]
-            }),
-            parent: editorContainer
+        const editor = window.MonacoEditor.create(editorContainer, {
+            value: textData,
+            language: language,
+            theme: 'vs-dark',
+            automaticLayout: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            lineNumbers: 'on',
+            folding: true,
+            fontSize: 13,
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace'
         });
 
         this.lookupEditors.set(lookupId, editor);
@@ -774,15 +717,13 @@ class TTPEditor {
         const editor = this.lookupEditors.get(lookupId);
         if (!editor) return;
 
-        const { EditorView, EditorState, basicSetup, json, yaml, python, oneDark } = window.CodeMirror6;
-
-        // Choose language extension and default content based on load format
-        let languageExtension;
-        let defaultContent = editor.state.doc.toString(); // Keep existing content
+        // Choose language and default content based on load format
+        let language;
+        let defaultContent = editor.getValue(); // Keep existing content
 
         switch (loadFormat) {
             case 'json':
-                languageExtension = json();
+                language = 'json';
                 if (!defaultContent.trim()) {
                     defaultContent = `{
     "device1": {"ip": "192.168.1.1", "hostname": "router1"},
@@ -791,7 +732,7 @@ class TTPEditor {
                 }
                 break;
             case 'yaml':
-                languageExtension = yaml();
+                language = 'yaml';
                 if (!defaultContent.trim()) {
                     defaultContent = `device1:
   ip: 192.168.1.1
@@ -802,7 +743,7 @@ device2:
                 }
                 break;
             case 'csv':
-                languageExtension = python(); // Plain text
+                language = 'plaintext';
                 if (!defaultContent.trim()) {
                     defaultContent = `hostname,ip,device_type
 router1,192.168.1.1,cisco
@@ -810,7 +751,7 @@ router2,192.168.1.2,cisco`;
                 }
                 break;
             case 'ini':
-                languageExtension = python(); // Plain text
+                language = 'plaintext';
                 if (!defaultContent.trim()) {
                     defaultContent = `[device1]
 hostname = router1
@@ -823,7 +764,7 @@ ip = 192.168.1.2`;
                 break;
             case 'python':
             default:
-                languageExtension = python();
+                language = 'python';
                 if (!defaultContent.trim()) {
                     defaultContent = `{
     "device1": {"ip": "192.168.1.1", "hostname": "router1"},
@@ -833,20 +774,9 @@ ip = 192.168.1.2`;
                 break;
         }
 
-        const newState = EditorState.create({
-            doc: defaultContent,
-            extensions: [
-                basicSetup,
-                languageExtension,
-                oneDark,
-                EditorView.theme({
-                    "&": { height: "200px" },
-                    ".cm-scroller": { overflow: "auto" }
-                })
-            ]
-        });
-
-        editor.setState(newState);
+        // Update the editor with new language and content
+        editor.setValue(defaultContent);
+        editor.setModel(window.MonacoEditor.createModel(defaultContent, language));
     }
 
     removeLookupItem(lookupId) {
@@ -879,7 +809,7 @@ ip = 192.168.1.2`;
             // Get text data from editor
             let textData = '';
             if (this.lookupEditors.has(lookup.id)) {
-                textData = this.lookupEditors.get(lookup.id).state.doc.toString();
+                textData = this.lookupEditors.get(lookup.id).getValue();
             }
 
             if (name && textData.trim()) {
@@ -928,21 +858,20 @@ ip = 192.168.1.2`;
     updateVarsEditorFormat() {
         if (!this.varsEditor) return;
 
-        const { EditorView, EditorState, basicSetup, json, yaml, python, oneDark } = window.CodeMirror6;
         const format = this.elements.varsFormat.value;
         
-        let languageExtension;
+        let language;
         let defaultContent;
         
         switch (format) {
             case 'yaml':
-                languageExtension = yaml();
+                language = 'yaml';
                 defaultContent = `hostname: switch-1
 domain: example.com
 timezone: UTC`;
                 break;
             case 'python':
-                languageExtension = python();
+                language = 'python';
                 defaultContent = `{
     "hostname": "switch-1",
     "domain": "example.com", 
@@ -950,7 +879,7 @@ timezone: UTC`;
 }`;
                 break;
             default: // json
-                languageExtension = json();
+                language = 'json';
                 defaultContent = `{
   "hostname": "switch-1",
   "domain": "example.com",
@@ -958,26 +887,14 @@ timezone: UTC`;
 }`;
         }
 
-        const newState = EditorState.create({
-            doc: defaultContent,
-            extensions: [
-                basicSetup,
-                languageExtension,
-                oneDark,
-                EditorView.theme({
-                    "&": { height: "100%" },
-                    ".cm-scroller": { overflow: "auto" }
-                })
-            ]
-        });
-
-        this.varsEditor.setState(newState);
+        this.varsEditor.setValue(defaultContent);
+        this.varsEditor.setModel(window.MonacoEditor.createModel(defaultContent, language));
     }
 
     saveGlobalVars() {
         if (!this.varsEditor) return;
 
-        const varsText = this.varsEditor.state.doc.toString();
+        const varsText = this.varsEditor.getValue();
         const format = this.elements.varsFormat.value;
         
         this.ttpProcessor.setGlobalVars(varsText, format);
@@ -1001,10 +918,8 @@ timezone: UTC`;
 
     setupPaneResizing() {
         const resizeHandles = document.querySelectorAll('.resize-handle');
-        console.log('Found resize handles:', resizeHandles.length);
         
         resizeHandles.forEach((handle, index) => {
-            console.log(`Setting up resize handle ${index}:`, handle);
             let isResizing = false;
             let startX = 0;
             let startLeftWidth = 0;
@@ -1013,12 +928,10 @@ timezone: UTC`;
             let rightPane = null;
             
             handle.addEventListener('mousedown', (e) => {
-                console.log('Resize handle mousedown triggered');
                 isResizing = true;
                 startX = e.clientX;
                 leftPane = handle.previousElementSibling;
                 rightPane = handle.nextElementSibling;
-                console.log('Left pane:', leftPane, 'Right pane:', rightPane);
                 
                 // Get current widths
                 startLeftWidth = leftPane.offsetWidth;
@@ -1071,8 +984,8 @@ timezone: UTC`;
     }
 
     validateInputs() {
-        const dataValue = this.dataEditor ? this.dataEditor.state.doc.toString() : '';
-        const templateValue = this.templateEditor ? this.templateEditor.state.doc.toString() : '';
+        const dataValue = this.dataEditor ? this.dataEditor.getValue() : '';
+        const templateValue = this.templateEditor ? this.templateEditor.getValue() : '';
         
         const isValid = dataValue.trim().length > 0 && templateValue.trim().length > 0;
         this.elements.processBtn.disabled = !isValid;
@@ -1100,8 +1013,8 @@ timezone: UTC`;
             return;
         }
 
-        const dataValue = this.dataEditor.state.doc.toString();
-        const templateValue = this.templateEditor.state.doc.toString();
+        const dataValue = this.dataEditor.getValue();
+        const templateValue = this.templateEditor.getValue();
         
         // Debug: Check for hidden characters or extra content (can be removed later)
         // console.log('Template length:', templateValue.length);
@@ -1132,27 +1045,26 @@ timezone: UTC`;
     }
 
     displayResults(result) {
-        const { json, javascript, yaml } = window.CodeMirror6;
         const format = this.elements.outputFormat.value;
         
         if (result.success) {
             let displayData = result.data;
-            let languageExtension = json(); // Default to JSON for better folding
+            let language = 'json'; // Default to JSON for better folding
             
             // Handle different formats and set appropriate language
             if (format === 'table' && result.raw_results) {
                 displayData = this.formatAsTable(result.raw_results);
-                languageExtension = null; // Plain text
+                language = 'plaintext'; // Plain text
             } else if (format === 'yaml') {
-                languageExtension = yaml();
+                language = 'yaml';
             } else if (format === 'json') {
-                languageExtension = json(); // Use proper JSON mode
+                language = 'json'; // Use proper JSON mode
             }
             
             console.log('Setting mode to:', format, 'Data length:', displayData?.length);
             
             // Update the result editor with new content and language
-            this.updateResultEditor(displayData || 'No data returned', languageExtension);
+            this.updateResultEditor(displayData || 'No data returned', language);
             
             // Enable download button
             this.elements.downloadBtn.disabled = false;
@@ -1203,10 +1115,9 @@ timezone: UTC`;
                 const lineMatch = result.error.message.match(/line (\d+)/);
                 if (lineMatch) {
                     let reportedLine = parseInt(lineMatch[1]);
-                    const templateLines = this.templateEditor.state.doc.lines;
+                    const templateLines = this.templateEditor.getModel().getLineCount();
                     
-                    // The error message uses 1-based line numbers, but gutter elements are 0-based
-                    // So line 18 in the error message = index 17 in the gutter array
+                    // The error message uses 1-based line numbers, but Monaco uses 1-based too
                     let lineNumber = reportedLine - 1;
                     
                     // Only show error marker if we don't already have one
@@ -1219,68 +1130,15 @@ timezone: UTC`;
         }
     }
 
-    updateResultEditor(content, languageExtension = null) {
-        const { EditorView, EditorState, basicSetup, json, oneDark, foldGutter, foldKeymap, keymap, searchKeymap, highlightSelectionMatches } = window.CodeMirror6;
+    updateResultEditor(content, language = 'json') {
+        // Set the content
+        this.resultEditor.setValue(content);
         
-        // Custom extension to prevent editing but allow search
-        const readOnlyExtension = EditorView.domEventHandlers({
-            beforeinput: (event, view) => {
-                // Allow search-related events but prevent content changes
-                if (event.inputType === 'insertText' || 
-                    event.inputType === 'insertCompositionText' ||
-                    event.inputType === 'deleteContentBackward' ||
-                    event.inputType === 'deleteContentForward') {
-                    event.preventDefault();
-                    return true;
-                }
-                return false;
-            },
-            keydown: (event, view) => {
-                // Allow search shortcuts and navigation
-                if (event.ctrlKey || event.metaKey) {
-                    if (event.key === 'f' || event.key === 'g' || event.key === 'h') {
-                        return false; // Allow search shortcuts
-                    }
-                }
-                // Allow arrow keys, page up/down, home, end for navigation
-                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
-                    return false;
-                }
-                // Prevent other key inputs that would modify content
-                if (event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Enter') {
-                    event.preventDefault();
-                    return true;
-                }
-                return false;
-            }
-        });
+        // Set the language
+        window.MonacoLanguages.setLanguageConfiguration(language, {});
+        this.resultEditor.setModel(window.MonacoEditor.createModel(content, language));
         
-        const extensions = [
-            basicSetup,
-            oneDark,
-            highlightSelectionMatches(),
-            keymap.of([...foldKeymap, ...searchKeymap]), // Add fold and search keyboard shortcuts
-            readOnlyExtension, // Custom read-only extension that allows search
-            EditorView.theme({
-                "&": { height: "100%" },
-                ".cm-scroller": { overflow: "auto" }
-            })
-        ];
-        
-        if (languageExtension) {
-            extensions.push(languageExtension);
-        } else {
-            extensions.push(json()); // Default to JSON for folding
-        }
-        
-        const newState = EditorState.create({
-            doc: content,
-            extensions: extensions
-        });
-        
-        this.resultEditor.setState(newState);
-        
-        console.log('CodeMirror 6 content updated with proper JSON folding and search support');
+        console.log('Monaco content updated with proper JSON folding and search support');
     }
 
     showError(message) {
@@ -1296,76 +1154,46 @@ timezone: UTC`;
         const templateContainer = document.querySelector('.template-pane');
         if (templateContainer) {
             templateContainer.classList.add('has-error');
-            templateContainer.title = `Error at line ${lineNumber}: ${message}`;
+            templateContainer.title = `Error at line ${lineNumber + 1}: ${message}`;
         }
         
         // Add error indicator to the pane header
-        const templateHeader = document.querySelector('.template-pane .pane-header');
+        const templateHeader = document.querySelector('.template-pane .panel-header');
         if (templateHeader) {
-            templateHeader.innerHTML = `TTP Template <span style="color: #ff6666;">⚠ Error at line ${lineNumber}</span>`;
+            templateHeader.innerHTML = `<span class="panel-title">TTP Template <span style="color: #ff6666;">⚠ Error at line ${lineNumber + 1}</span></span>`;
         }
         
-        // Add line-specific error marker
-        this.addLineErrorMarker(lineNumber, message);
+        // Add Monaco error marker
+        this.addMonacoErrorMarker(lineNumber, message);
     }
 
-    addLineErrorMarker(lineNumber, message) {
-        // Wait a bit for the editor to be fully rendered
-        setTimeout(() => {
-            const editorElement = document.querySelector('.template-pane .cm-editor');
-            if (!editorElement) {
-                console.log('Editor element not found');
-                return;
-            }
+    addMonacoErrorMarker(lineNumber, message) {
+        // Clear any existing markers
+        this.clearErrorMarkers();
+        
+        // Add Monaco error marker
+        const model = this.templateEditor.getModel();
+        if (model) {
+            const lineContent = model.getLineContent(lineNumber + 1);
+            const endColumn = lineContent.length + 1;
             
-            // Find the line number gutter
-            const gutterElement = editorElement.querySelector('.cm-gutter');
-            if (!gutterElement) {
-                console.log('Gutter element not found');
-                return;
-            }
-            
-            // Find the specific line number element
-            const lineNumberElements = gutterElement.querySelectorAll('.cm-gutterElement');
-            
-            // The first gutter element is the fold gutter, so we need to adjust for that
-            let targetIndex = lineNumber; // This is 0-based for the line number
-            
-            // Get the number of lines in the template
-            const templateLines = this.templateEditor.state.doc.lines;
-            
-            // If we have more gutter elements than lines, the first one is the fold gutter
-            if (lineNumberElements.length > templateLines) {
-                targetIndex = lineNumber + 1; // Skip the fold gutter
-            }
-            
-            if (lineNumberElements.length > targetIndex) {
-                const targetLineNumber = lineNumberElements[targetIndex];
-                if (targetLineNumber) {
-                    // Add error marker class to the line number
-                    targetLineNumber.classList.add('cm-error-line-number');
-                    targetLineNumber.title = `Error: ${message}`;
-                    
-                    // Add a red error icon
-                    const errorIcon = document.createElement('span');
-                    errorIcon.className = 'cm-error-icon';
-                    errorIcon.innerHTML = '⚠';
-                    errorIcon.title = `Error: ${message}`;
-                    targetLineNumber.appendChild(errorIcon);
+            // Add error marker using Monaco's decoration API
+            const decorations = [{
+                range: {
+                    startLineNumber: lineNumber + 1,
+                    startColumn: 1,
+                    endLineNumber: lineNumber + 1,
+                    endColumn: endColumn
+                },
+                options: {
+                    className: 'monaco-error-line',
+                    glyphMarginClassName: 'monaco-error-glyph',
+                    hoverMessage: { value: `Error: ${message}` }
                 }
-            }
+            }];
             
-            // Also highlight the line itself
-            const lineElements = editorElement.querySelectorAll('.cm-line');
-            
-            if (lineElements.length > lineNumber) {
-                const targetLine = lineElements[lineNumber];
-                if (targetLine) {
-                    targetLine.classList.add('cm-error-line');
-                    targetLine.title = `Error: ${message}`;
-                }
-            }
-        }, 100);
+            this.templateEditor.deltaDecorations([], decorations);
+        }
     }
 
     clearErrorMarkers() {
@@ -1379,55 +1207,31 @@ timezone: UTC`;
         }
         
         // Restore normal header text
-        const templateHeader = document.querySelector('.template-pane .pane-header');
+        const templateHeader = document.querySelector('.template-pane .panel-header');
         if (templateHeader) {
-            templateHeader.innerHTML = 'TTP Template';
+            templateHeader.innerHTML = '<span class="panel-title">TTP Template</span>';
         }
         
-        // Remove line-specific error markers
-        this.removeLineErrorMarkers();
-    }
-
-    removeLineErrorMarkers() {
-        const editorElement = document.querySelector('.template-pane .cm-editor');
-        if (!editorElement) return;
-        
-        // Remove error line classes
-        const errorLines = editorElement.querySelectorAll('.cm-error-line');
-        errorLines.forEach(line => {
-            line.classList.remove('cm-error-line');
-            line.title = '';
-        });
-        
-        // Remove error line number classes and icons
-        const errorLineNumbers = editorElement.querySelectorAll('.cm-error-line-number');
-        errorLineNumbers.forEach(lineNumber => {
-            lineNumber.classList.remove('cm-error-line-number');
-            lineNumber.title = '';
-        });
-        
-        // Remove error icons
-        const errorIcons = editorElement.querySelectorAll('.cm-error-icon');
-        errorIcons.forEach(icon => icon.remove());
+        // Clear Monaco error markers
+        if (this.templateEditor) {
+            this.templateEditor.deltaDecorations(this.templateEditor.getModel().getAllDecorations(), []);
+        }
         
         // Reset the error marker flag
         this.hasErrorMarker = false;
     }
+
 
     clearAll() {
         this.cancelAutoProcess();
         
         // Clear editors
         if (this.dataEditor) {
-            this.dataEditor.dispatch({
-                changes: { from: 0, to: this.dataEditor.state.doc.length, insert: '' }
-            });
+            this.dataEditor.setValue('');
         }
         
         if (this.templateEditor) {
-            this.templateEditor.dispatch({
-                changes: { from: 0, to: this.templateEditor.state.doc.length, insert: '' }
-            });
+            this.templateEditor.setValue('');
         }
         
         this.updateResultEditor('Results will appear here after processing...');
@@ -1448,16 +1252,12 @@ timezone: UTC`;
         
         // Set data
         if (this.dataEditor) {
-            this.dataEditor.dispatch({
-                changes: { from: 0, to: this.dataEditor.state.doc.length, insert: example.data }
-            });
+            this.dataEditor.setValue(example.data);
         }
         
         // Set template
         if (this.templateEditor) {
-            this.templateEditor.dispatch({
-                changes: { from: 0, to: this.templateEditor.state.doc.length, insert: example.template }
-            });
+            this.templateEditor.setValue(example.template);
         }
         
         this.updateResultEditor('Example loaded. Processing...');
@@ -1469,7 +1269,7 @@ timezone: UTC`;
     }
 
     downloadResults() {
-        const content = this.resultEditor.state.doc.toString();
+        const content = this.resultEditor.getValue();
         const format = this.elements.outputFormat.value;
         const filename = `ttp_results.${format}`;
         const mimeType = format === 'json' ? 'application/json' : 
@@ -1532,6 +1332,16 @@ timezone: UTC`;
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
     const editor = new TTPEditor();
-    await editor.init();
-    editor.hideLoadingOverlay();
+    
+    // Set up global function for Monaco initialization
+    window.initializeEditors = async () => {
+        await editor.init();
+        editor.hideLoadingOverlay();
+    };
+    
+    // If Monaco is already loaded, initialize immediately
+    if (window.MonacoEditor) {
+        await editor.init();
+        editor.hideLoadingOverlay();
+    }
 });
