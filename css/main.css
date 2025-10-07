@@ -142,7 +142,8 @@ body {
     flex-direction: column;
     min-width: 200px;
     overflow: hidden;
-    flex: 1;
+    flex: 0 0 33.33%; /* Don't grow, don't shrink, fixed width */
+    width: 33.33%; /* Equal initial width for all panes */
 }
 
 .pane:last-child {
@@ -163,12 +164,15 @@ body {
 
 /* Resize handles */
 .resize-handle {
-    width: 4px;
+    width: 6px;
     background: #404040;
     cursor: col-resize;
     transition: background-color 0.2s ease;
     position: relative;
     flex-shrink: 0;
+    z-index: 10;
+    border-left: 1px solid #525252;
+    border-right: 1px solid #525252;
 }
 
 .resize-handle:hover {
@@ -181,6 +185,7 @@ body {
 
 .resize-handle.dragging {
     background: #6b7280;
+    box-shadow: 0 0 10px rgba(107, 114, 128, 0.5);
 }
 
 .editor-panel {
@@ -684,4 +689,344 @@ body {
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid #404040;
+}
+
+/* Functions Modal Styles */
+.functions-modal-content {
+    max-width: 1000px;
+    width: 90%;
+    max-height: 85vh;
+}
+
+.functions-container {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    max-height: 60vh;
+}
+
+.function-item {
+    border: 1px solid #404040;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    background: #333333;
+    overflow: hidden;
+}
+
+.function-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #3d3d3d;
+    cursor: pointer;
+    border-bottom: 1px solid #404040;
+    transition: background-color 0.2s ease;
+}
+
+.function-header:hover {
+    background: #454545;
+}
+
+.function-header.collapsed + .function-body {
+    display: none;
+}
+
+.function-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #e5e7eb;
+    font-weight: 500;
+}
+
+.function-collapse-icon {
+    font-size: 12px;
+    color: #9ca3af;
+    transition: transform 0.2s ease;
+}
+
+.function-header.collapsed .function-collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.function-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.function-remove-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.function-remove-btn:hover {
+    background: #b91c1c;
+}
+
+.function-body {
+    padding: 16px;
+    background: #2d2d2d;
+}
+
+.function-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.function-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.function-form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.function-form-group label {
+    color: #e5e7eb;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.function-form-group input,
+.function-form-group select {
+    padding: 8px 12px;
+    border: 1px solid #525252;
+    border-radius: 4px;
+    background: #404040;
+    color: #e5e7eb;
+    font-size: 0.875rem;
+}
+
+.function-form-group input:focus,
+.function-form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.function-checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.function-checkbox-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.function-code-editor {
+    border: 1px solid #404040;
+    border-radius: 4px;
+    overflow: hidden;
+    min-height: 200px;
+    background: #262626;
+}
+
+.add-function-btn {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #404040;
+    border: 2px dashed #525252;
+    color: #9ca3af;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-function-btn:hover {
+    background: #525252;
+    border-color: #6b7280;
+    color: #e5e7eb;
+}
+
+/* Function validation styles */
+.function-form-group.error input,
+.function-form-group.error select {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 1px #dc2626;
+}
+
+.function-error-message {
+    color: #fca5a5;
+    font-size: 0.75rem;
+    margin-top: 4px;
+}
+
+/* Lookups Modal Styles */
+.lookups-modal-content {
+    max-width: 1000px;
+    width: 90%;
+    max-height: 85vh;
+}
+
+.lookups-container {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    max-height: 60vh;
+}
+
+.lookup-item {
+    border: 1px solid #404040;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    background: #333333;
+    overflow: hidden;
+}
+
+.lookup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #3d3d3d;
+    cursor: pointer;
+    border-bottom: 1px solid #404040;
+    transition: background-color 0.2s ease;
+}
+
+.lookup-header:hover {
+    background: #454545;
+}
+
+.lookup-header.collapsed + .lookup-body {
+    display: none;
+}
+
+.lookup-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #e5e7eb;
+    font-weight: 500;
+}
+
+.lookup-collapse-icon {
+    font-size: 12px;
+    color: #9ca3af;
+    transition: transform 0.2s ease;
+}
+
+.lookup-header.collapsed .lookup-collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.lookup-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.lookup-remove-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.lookup-remove-btn:hover {
+    background: #b91c1c;
+}
+
+.lookup-body {
+    padding: 16px;
+    background: #2d2d2d;
+}
+
+.lookup-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.lookup-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.lookup-form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.lookup-form-group label {
+    color: #e5e7eb;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.lookup-form-group input,
+.lookup-form-group select {
+    padding: 8px 12px;
+    border: 1px solid #525252;
+    border-radius: 4px;
+    background: #404040;
+    color: #e5e7eb;
+    font-size: 0.875rem;
+}
+
+.lookup-form-group input:focus,
+.lookup-form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.lookup-data-editor {
+    border: 1px solid #404040;
+    border-radius: 4px;
+    overflow: hidden;
+    min-height: 200px;
+    background: #262626;
+}
+
+.add-lookup-btn {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #404040;
+    border: 2px dashed #525252;
+    color: #9ca3af;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-lookup-btn:hover {
+    background: #525252;
+    border-color: #6b7280;
+    color: #e5e7eb;
+}
+
+/* Lookup validation styles */
+.lookup-form-group.error input,
+.lookup-form-group.error select {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 1px #dc2626;
+}
+
+.lookup-error-message {
+    color: #fca5a5;
+    font-size: 0.75rem;
+    margin-top: 4px;
 }

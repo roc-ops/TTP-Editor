@@ -24,6 +24,8 @@
                     <option value="table">Table</option>
                 </select>
                 <button id="globalVarsBtn" class="btn btn-secondary">Vars</button>
+                <button id="functionsBtn" class="btn btn-secondary">Functions</button>
+                <button id="lookupsBtn" class="btn btn-secondary">Lookups</button>
                 <label class="auto-process-toggle">
                     <input type="checkbox" id="autoProcess" checked>
                     Auto Process
@@ -109,6 +111,48 @@
         </div>
     </div>
 
+    <!-- Functions Modal -->
+    <div id="functionsModal" class="modal">
+        <div class="modal-content functions-modal-content">
+            <div class="modal-header">
+                <h2>Custom Functions</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="functions-container" id="functionsContainer">
+                    <!-- Function entries will be added here dynamically -->
+                </div>
+                <button id="addFunctionBtn" class="btn btn-secondary add-function-btn">+ Add Function</button>
+                <div class="modal-footer">
+                    <button id="saveFunctionsBtn" class="btn btn-primary">Save Functions</button>
+                    <button id="clearFunctionsBtn" class="btn btn-secondary">Clear All</button>
+                    <button id="cancelFunctionsBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lookups Modal -->
+    <div id="lookupsModal" class="modal">
+        <div class="modal-content lookups-modal-content">
+            <div class="modal-header">
+                <h2>Lookup Tables</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="lookups-container" id="lookupsContainer">
+                    <!-- Lookup entries will be added here dynamically -->
+                </div>
+                <button id="addLookupBtn" class="btn btn-secondary add-lookup-btn">+ Add Lookup</button>
+                <div class="modal-footer">
+                    <button id="saveLookupsBtn" class="btn btn-primary">Save Lookups</button>
+                    <button id="clearLookupsBtn" class="btn btn-secondary">Clear All</button>
+                    <button id="cancelLookupsBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-content">
@@ -140,6 +184,7 @@
         import { yaml } from '@codemirror/lang-yaml';
         import { foldGutter, foldKeymap, unfoldAll, foldAll } from '@codemirror/language';
         import { oneDark } from '@codemirror/theme-one-dark';
+        import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
         
         // Make CodeMirror 6 available globally
         window.CodeMirror6 = {
@@ -155,7 +200,9 @@
             unfoldAll,
             foldAll,
             oneDark,
-            keymap
+            keymap,
+            searchKeymap,
+            highlightSelectionMatches
         };
         
         console.log('CodeMirror 6 loaded successfully with proper folding support');

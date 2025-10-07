@@ -7,7 +7,6 @@ class TTPProcessor {
         this.initPromise = null;
         this.globalVars = null;
         this.customFunctions = [];
-        this.lookupTables = [];
         this.basePythonCode = null;
     }
 
@@ -52,7 +51,7 @@ def print_to_console(*args, **kwargs):
     js.console.log(' '.join(map(str, args)))
 sys.stdout.write = print_to_console
 
-def process_ttp_template(data_text, template_text, output_format='json', global_vars_text='', global_vars_format='json', custom_functions_text='', custom_functions_data=None, lookup_tables_data=None):
+def process_ttp_template(data_text, template_text, output_format='json', global_vars_text='', global_vars_format='json', custom_functions_text='', custom_functions_data=None):
     """
     Process TTP template with given data
 
@@ -68,6 +67,11 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
         # Import required modules at the top
         import json
         import yaml
+
+        # Debug: Log template info (can be removed later)
+        # template_lines = template_text.split('\\\\n')
+        # print(f"TTP Debug: Template has {len(template_lines)} lines")
+        # print(f"TTP Debug: Template length: {len(template_text)} characters")
 
         # Parse global variables if provided
         global_vars_dict = {}
@@ -89,24 +93,17 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
                 global_vars_dict = {}
 
         # Create TTP parser with global variables
+
         parser = ttp()
 
         # Add custom functions from modal
         if custom_functions_data:
             for func_config in custom_functions_data:
                 try:
-                    # Convert JavaScript object to Python dict properly
-                    if hasattr(func_config, 'to_py'):
-                        func_dict = func_config.to_py()
-                    else:
-                        func_dict = dict(func_config)
-
-                    func_name = func_dict.get('function_name')
-                    scope = func_dict.get('scope')
-                    name = func_dict.get('name') if func_dict.get('name') else None
-                    add_ttp = func_dict.get('add_ttp', False)
-
-                    print(f"TTP Debug: Processing function config: {func_dict}")
+                    func_name = func_config.get('function_name')
+                    scope = func_config.get('scope')
+                    name = func_config.get('name') if func_config.get('name') else None
+                    add_ttp = func_config.get('add_ttp', False)
 
                     if func_name and scope:
                         # Get the function from globals (it should be available from custom functions defined above)
@@ -116,43 +113,9 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
                             print(f"TTP Debug: Added function {func_name} with scope {scope}")
                         else:
                             print(f"TTP Debug: Function {func_name} not found in globals")
-                    else:
-                        print(f"TTP Debug: Missing required function_name or scope: {func_name}, {scope}")
                 except Exception as e:
-                    print(f"TTP Debug: Error adding function: {str(e)}")
-                    import traceback
-                    print(f"TTP Debug: Traceback: {traceback.format_exc()}")
-
+                    print(f"TTP Debug: Error adding function {func_config}: {str(e)}")
         parser.add_template(template_text)
-        # Add lookup tables from modal
-        if lookup_tables_data:
-            for lookup_config in lookup_tables_data:
-                try:
-                    # Convert JavaScript object to Python dict properly
-                    if hasattr(lookup_config, 'to_py'):
-                        lookup_dict = lookup_config.to_py()
-                    else:
-                        lookup_dict = dict(lookup_config)
-
-                    lookup_name = lookup_dict.get('name')
-                    lookup_text_data = lookup_dict.get('text_data', '')
-                    lookup_load = lookup_dict.get('load', 'python')
-
-                    print(f"TTP Debug: Processing lookup table: {lookup_name} with load format {lookup_load}")
-
-                    if lookup_name and lookup_text_data.strip():
-                        # Use add_lookup method with the specified load format
-                        parser.add_lookup(lookup_name, text_data=lookup_text_data, load=lookup_load)
-                        print(f"TTP Debug: Added lookup table '{lookup_name}' with load format '{lookup_load}'")
-                        print(f"TTP Debug: Lookup table data: {lookup_text_data}")
-                    else:
-                        print(f"TTP Debug: Missing required lookup name or text data: {lookup_name}")
-                except Exception as e:
-                    print(f"TTP Debug: Error adding lookup table: {str(e)}")
-                    import traceback
-                    print(f"TTP Debug: Traceback: {traceback.format_exc()}")
-
-        
         parser.add_input(data=data_text, template_name="_all_")
         parser.add_vars(global_vars_dict)
 
@@ -203,6 +166,10 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
         }
 
     except Exception as e:
+        # Debug: Log the full error details (can be removed later)
+        # print(f"TTP Error: {type(e).__name__}: {str(e)}")
+        # print(f"TTP Traceback: {traceback.format_exc()}")
+
         # Extract the first (most accurate) error from the traceback
         traceback_text = traceback.format_exc()
         first_error = str(e)
@@ -365,7 +332,7 @@ def get_template_info(template_text):
                     this.capturedOutput += text;
                 }
             });
-
+            
             this.pyodide.setStderr({
                 batched: (text) => {
                     console.log('Python stderr captured:', text);
@@ -375,7 +342,7 @@ def get_template_info(template_text):
 
             console.log('Installing packages...');
             await this.pyodide.loadPackage(['micropip']);
-
+            
             // Install TTP and dependencies
             await this.pyodide.runPythonAsync(`
                 import micropip
@@ -385,6 +352,278 @@ def get_template_info(template_text):
             // Setup TTP processing functions
             this.basePythonCode = this.generatePythonCode();
             await this.pyodide.runPythonAsync(this.basePythonCode);
+    """
+    Process TTP template with given data
+    
+    Args:
+        data_text (str): Raw text data to parse
+        template_text (str): TTP template
+        output_format (str): Output format - 'json', 'yaml', or 'python'
+    
+    Returns:
+        dict: Result with 'success', 'data', 'error', 'stats' keys
+    """
+    try:
+        # Import required modules at the top
+        import json
+        import yaml
+        
+        # Debug: Log template info (can be removed later)
+        # template_lines = template_text.split('\\n')
+        # print(f"TTP Debug: Template has {len(template_lines)} lines")
+        # print(f"TTP Debug: Template length: {len(template_text)} characters")
+        
+        # Execute custom functions if provided
+        if custom_functions_text and custom_functions_text.strip():
+            try:
+                exec(custom_functions_text, globals())
+                print(f"TTP Debug: Executed custom functions")
+            except Exception as e:
+                print(f"TTP Debug: Error executing custom functions: {str(e)}")
+                # Don't fail the whole process, just log the error
+
+        # Parse global variables if provided
+        global_vars_dict = {}
+        if global_vars_text and global_vars_text.strip():
+            try:
+                if global_vars_format == 'json':
+                    global_vars_dict = json.loads(global_vars_text)
+                elif global_vars_format == 'yaml':
+                    global_vars_dict = yaml.safe_load(global_vars_text)
+                elif global_vars_format == 'python':
+                    # Evaluate Python dict string
+                    global_vars_dict = eval(global_vars_text)
+                else:
+                    global_vars_dict = {}
+
+                print(f"TTP Debug: Parsed global variables from {global_vars_format} format: {global_vars_dict}")
+            except Exception as e:
+                print(f"TTP Debug: Error parsing global variables: {str(e)}")
+                global_vars_dict = {}
+        
+        # Create TTP parser with global variables
+        
+        parser = ttp()
+
+        # Add custom functions from modal
+        if custom_functions_data:
+            for func_config in custom_functions_data:
+                try:
+                    func_name = func_config.get('function_name')
+                    scope = func_config.get('scope')
+                    name = func_config.get('name') if func_config.get('name') else None
+                    add_ttp = func_config.get('add_ttp', False)
+
+                    if func_name and scope:
+                        # Get the function from globals (it should be available from exec'd custom_functions_text)
+                        if func_name in globals():
+                            func = globals()[func_name]
+                            parser.add_function(func, scope, name=name, add_ttp=add_ttp)
+                            print(f"TTP Debug: Added function {func_name} with scope {scope}")
+                        else:
+                            print(f"TTP Debug: Function {func_name} not found in globals")
+                except Exception as e:
+                    print(f"TTP Debug: Error adding function {func_config}: {str(e)}")
+        parser.add_template(template_text)
+        parser.add_input(data=data_text, template_name="_all_")
+        parser.add_vars(global_vars_dict)
+        
+        # Debug: Check if template has macros
+        if 'macro(' in template_text:
+            print("TTP Debug: Template contains macro calls")
+        
+        # Parse the data
+        parser.parse()
+        
+        # Get results
+        results = parser.result()
+        
+        # TTP returns results in nested arrays like [[{data}]]
+        # Use all results instead of just the first group
+        actual_data = results if results else []
+        
+        # Format output based on requested format
+        if output_format == 'yaml':
+            formatted_data = yaml.dump(actual_data, default_flow_style=False, indent=2)
+        elif output_format == 'python':
+            formatted_data = repr(actual_data)
+        else:  # json
+            formatted_data = json.dumps(actual_data, indent=2, ensure_ascii=False)
+        
+        # Calculate some basic stats
+        # Count total items across all result groups
+        total_items = 0
+        if results:
+            for group in results:
+                if isinstance(group, list):
+                    total_items += len(group)
+                else:
+                    total_items += 1
+        
+        stats = {
+            'template_groups': len([line for line in template_text.split('\\n') if '<group' in line]),
+            'parsed_items': total_items,
+            'data_lines': len([line for line in data_text.split('\\n') if line.strip()])
+        }
+        
+        return {
+            'success': True,
+            'data': formatted_data,
+            'raw_results': results,
+            'stats': stats,
+            'error': None
+        }
+        
+    except Exception as e:
+        # Debug: Log the full error details (can be removed later)
+        # print(f"TTP Error: {type(e).__name__}: {str(e)}")
+        # print(f"TTP Traceback: {traceback.format_exc()}")
+        
+        # Extract the first (most accurate) error from the traceback
+        traceback_text = traceback.format_exc()
+        first_error = str(e)
+        
+        # Look for the first ParseError in the traceback
+        import re
+        parse_error_match = re.search(r'ParseError: ([^\\n]+)', traceback_text)
+        if parse_error_match:
+            first_error = f"ParseError: {parse_error_match.group(1)}"
+        
+        error_info = {
+            'type': type(e).__name__,
+            'message': first_error,
+            'traceback': traceback.format_exc()
+        }
+        
+        # Try to provide more context about the error
+        error_message = first_error
+        if 'line' in error_message and 'column' in error_message:
+            # TTP wraps templates in <template> tags, so line numbers are offset by 1
+            if 'not well-formed' in error_message or 'invalid token' in error_message:
+                # Extract line number and adjust for TTP wrapper
+                import re
+                line_match = re.search(r'line (\d+)', error_message)
+                if line_match:
+                    reported_line = int(line_match.group(1))
+                    template_lines = len(template_text.split('\\n'))
+                    if reported_line > template_lines:
+                        # This is likely the closing </template> tag
+                        actual_line = template_lines
+                        error_info['context'] = f'Error at end of template (line {actual_line}). TTP wraps templates in XML tags, so reported line {reported_line} refers to the wrapper.'
+                    elif reported_line > 1:
+                        # Adjust for the opening <template> tag
+                        actual_line = reported_line - 1
+                        error_info['context'] = f'Error at template line {actual_line} (TTP reports line {reported_line} due to XML wrapper).'
+                    else:
+                        error_info['context'] = f'Error at template line {reported_line}.'
+                else:
+                    error_info['context'] = 'This is a template syntax error. Check your TTP template format.'
+            elif 'template' in error_message.lower():
+                error_info['context'] = 'This error refers to the TTP template syntax.'
+        
+        return {
+            'success': False,
+            'data': None,
+            'raw_results': None,
+            'stats': None,
+            'error': error_info
+        }
+
+def validate_ttp_template(template_text):
+    """
+    Validate TTP template syntax
+    
+    Args:
+        template_text (str): TTP template to validate
+    
+    Returns:
+        dict: Validation result with 'valid', 'errors', 'warnings' keys
+    """
+    try:
+        # Try to create a parser with the template
+        parser = ttp(data="test", template=template_text)
+        
+        return {
+            'valid': True,
+            'errors': [],
+            'warnings': []
+        }
+        
+    except Exception as e:
+        return {
+            'valid': False,
+            'errors': [str(e)],
+            'warnings': []
+        }
+
+def get_template_info(template_text):
+    """
+    Extract information about a TTP template
+    
+    Args:
+        template_text (str): TTP template
+    
+    Returns:
+        dict: Template information
+    """
+    try:
+        lines = template_text.split('\\n')
+        
+        info = {
+            'groups': [],
+            'variables': [],
+            'functions': [],
+            'total_lines': len(lines),
+            'template_names': []
+        }
+        
+        for line in lines:
+            line = line.strip()
+            
+            # Find template names
+            if '<template name=' in line:
+                import re
+                match = re.search(r'name="([^"]+)"', line)
+                if match:
+                    info['template_names'].append(match.group(1))
+            
+            # Find groups
+            if '<group name=' in line:
+                import re
+                match = re.search(r'name="([^"]+)"', line)
+                if match:
+                    info['groups'].append(match.group(1))
+            
+            # Find variables (simplified detection)
+            if '{{' in line and '}}' in line:
+                import re
+                variables = re.findall(r'{{\\s*([^}|]+)', line)
+                for var in variables:
+                    var = var.strip()
+                    if var not in info['variables']:
+                        info['variables'].append(var)
+            
+            # Find functions (simplified detection)
+            if '|' in line and '{{' in line:
+                import re
+                functions = re.findall(r'\\|\\s*([^}\\s]+)', line)
+                for func in functions:
+                    func = func.strip()
+                    if func not in info['functions']:
+                        info['functions'].append(func)
+        
+        return info
+        
+    except Exception as e:
+        return {
+            'error': str(e),
+            'groups': [],
+            'variables': [],
+            'functions': [],
+            'total_lines': 0,
+            'template_names': []
+        }
+`);
 
             console.log('TTP processor initialized successfully');
             this.isInitialized = true;
@@ -396,18 +635,6 @@ def get_template_info(template_text):
         }
     }
 
-    async reinitializePython() {
-        try {
-            console.log('Reinitializing Python with custom functions...');
-            this.basePythonCode = this.generatePythonCode();
-            await this.pyodide.runPythonAsync(this.basePythonCode);
-            console.log('Python reinitialized successfully');
-        } catch (error) {
-            console.error('Failed to reinitialize Python:', error);
-            throw new Error(`Failed to reinitialize Python: ${error.message}`);
-        }
-    }
-
     setGlobalVars(varsText, format = 'json') {
         this.globalVars = {
             text: varsText,
@@ -415,13 +642,8 @@ def get_template_info(template_text):
         };
     }
 
-    async setCustomFunctions(functions) {
+    setCustomFunctions(functions) {
         this.customFunctions = functions || [];
-
-        // Reinitialize Python with new functions
-        if (this.isInitialized) {
-            await this.reinitializePython();
-        }
     }
 
     addCustomFunction(func) {
@@ -432,31 +654,8 @@ def get_template_info(template_text):
         this.customFunctions = this.customFunctions.filter(f => f.id !== id);
     }
 
-    async clearCustomFunctions() {
+    clearCustomFunctions() {
         this.customFunctions = [];
-
-        // Reinitialize Python without custom functions
-        if (this.isInitialized) {
-            await this.reinitializePython();
-        }
-    }
-
-    async setLookupTables(lookupTables) {
-        this.lookupTables = lookupTables || [];
-        console.log('TTPProcessor: Set lookup tables:', this.lookupTables);
-    }
-
-    addLookupTable(lookup) {
-        this.lookupTables.push(lookup);
-    }
-
-    removeLookupTable(id) {
-        this.lookupTables = this.lookupTables.filter(l => l.id !== id);
-    }
-
-    async clearLookupTables() {
-        this.lookupTables = [];
-        console.log('TTPProcessor: Cleared lookup tables');
     }
 
     async processTemplate(dataText, templateText, outputFormat = 'json') {
@@ -466,15 +665,15 @@ def get_template_info(template_text):
 
         try {
             const startTime = performance.now();
-
+            
             // Clear captured output before processing
             this.capturedOutput = '';
-
+            
             // Set the Python variables
             this.pyodide.globals.set('data_input', dataText);
             this.pyodide.globals.set('template_input', templateText);
             this.pyodide.globals.set('format_input', outputFormat);
-
+            
             // Set global variables if they exist
             if (this.globalVars) {
                 this.pyodide.globals.set('global_vars_text', this.globalVars.text);
@@ -484,9 +683,18 @@ def get_template_info(template_text):
                 this.pyodide.globals.set('global_vars_format', 'json');
             }
 
-            // Prepare function data for registration
+            // Set custom functions if they exist
+            let customFunctionsText = '';
             let customFunctionsData = [];
+
             if (this.customFunctions && this.customFunctions.length > 0) {
+                // Combine all function code
+                customFunctionsText = this.customFunctions
+                    .filter(f => f.code && f.code.trim())
+                    .map(f => f.code)
+                    .join('\n\n');
+
+                // Prepare function data for registration
                 customFunctionsData = this.customFunctions
                     .filter(f => f.code && f.code.trim() && f.scope)
                     .map(f => {
@@ -504,28 +712,12 @@ def get_template_info(template_text):
                     .filter(f => f.function_name); // Only include functions with valid names
             }
 
-            // Convert to plain JavaScript objects for Python
-            const plainFunctionsData = customFunctionsData.map(f => ({
-                function_name: f.function_name,
-                scope: f.scope,
-                name: f.name,
-                add_ttp: f.add_ttp
-            }));
-
-            this.pyodide.globals.set('custom_functions_data', plainFunctionsData);
-
-            // Prepare lookup tables data
-            const plainLookupsData = this.lookupTables.map(lookup => ({
-                name: lookup.name,
-                text_data: lookup.textData,
-                load: lookup.load
-            }));
-
-            this.pyodide.globals.set('lookup_tables_data', plainLookupsData);
+            this.pyodide.globals.set('custom_functions_text', customFunctionsText);
+            this.pyodide.globals.set('custom_functions_data', customFunctionsData);
 
             // Call the Python function
             const result = await this.pyodide.runPythonAsync(`
-                process_ttp_template(data_input, template_input, format_input, global_vars_text, global_vars_format, '', custom_functions_data, lookup_tables_data)
+                process_ttp_template(data_input, template_input, format_input, global_vars_text, global_vars_format, custom_functions_text, custom_functions_data)
             `);
 
             // Wait a moment for any remaining stdout to be captured
@@ -568,7 +760,7 @@ def get_template_info(template_text):
 
         try {
             this.pyodide.globals.set('template_to_validate', templateText);
-
+            
             const result = await this.pyodide.runPythonAsync(`
                 validate_ttp_template(template_to_validate)
             `);
@@ -592,7 +784,7 @@ def get_template_info(template_text):
 
         try {
             this.pyodide.globals.set('template_to_analyze', templateText);
-
+            
             const result = await this.pyodide.runPythonAsync(`
                 get_template_info(template_to_analyze)
             `);

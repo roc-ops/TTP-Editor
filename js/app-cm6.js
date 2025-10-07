@@ -15,6 +15,16 @@ class TTPEditor {
         this.autoProcessDelay = 1000;
         this.isAutoProcessEnabled = false;
         this.hasErrorMarker = false;
+
+        // Functions management
+        this.functions = [];
+        this.functionCounter = 0;
+        this.functionEditors = new Map();
+
+        // Lookups management
+        this.lookupTables = [];
+        this.lookupCounter = 0;
+        this.lookupEditors = new Map();
     }
 
     async init() {
@@ -61,7 +71,23 @@ class TTPEditor {
             varsEditor: document.getElementById('varsEditor'),
             saveVarsBtn: document.getElementById('saveVarsBtn'),
             clearVarsBtn: document.getElementById('clearVarsBtn'),
-            cancelVarsBtn: document.getElementById('cancelVarsBtn')
+            cancelVarsBtn: document.getElementById('cancelVarsBtn'),
+            // Functions modal elements
+            functionsBtn: document.getElementById('functionsBtn'),
+            functionsModal: document.getElementById('functionsModal'),
+            functionsContainer: document.getElementById('functionsContainer'),
+            addFunctionBtn: document.getElementById('addFunctionBtn'),
+            saveFunctionsBtn: document.getElementById('saveFunctionsBtn'),
+            clearFunctionsBtn: document.getElementById('clearFunctionsBtn'),
+            cancelFunctionsBtn: document.getElementById('cancelFunctionsBtn'),
+            // Lookups modal elements
+            lookupsBtn: document.getElementById('lookupsBtn'),
+            lookupsModal: document.getElementById('lookupsModal'),
+            lookupsContainer: document.getElementById('lookupsContainer'),
+            addLookupBtn: document.getElementById('addLookupBtn'),
+            saveLookupsBtn: document.getElementById('saveLookupsBtn'),
+            clearLookupsBtn: document.getElementById('clearLookupsBtn'),
+            cancelLookupsBtn: document.getElementById('cancelLookupsBtn')
         };
 
         // Initially disable process button
@@ -70,7 +96,7 @@ class TTPEditor {
     }
 
     async setupCodeEditors() {
-        const { EditorView, EditorState, basicSetup, python, oneDark } = window.CodeMirror6;
+        const { EditorView, EditorState, basicSetup, python, oneDark, searchKeymap, highlightSelectionMatches, keymap } = window.CodeMirror6;
         
         // Data input editor
         const dataState = EditorState.create({
@@ -79,6 +105,8 @@ class TTPEditor {
                 basicSetup,
                 python(),
                 oneDark,
+                highlightSelectionMatches(),
+                keymap.of(searchKeymap),
                 EditorView.theme({
                     "&": { height: "100%" },
                     ".cm-scroller": { overflow: "auto" }
@@ -107,6 +135,8 @@ class TTPEditor {
                 basicSetup,
                 python(),
                 oneDark,
+                highlightSelectionMatches(),
+                keymap.of(searchKeymap),
                 EditorView.theme({
                     "&": { height: "100%" },
                     ".cm-scroller": { overflow: "auto" }
@@ -130,10 +160,43 @@ class TTPEditor {
     }
 
     setupResultEditor() {
-        const { EditorView, EditorState, basicSetup, json, oneDark, foldGutter, foldKeymap, keymap } = window.CodeMirror6;
+        const { EditorView, EditorState, basicSetup, json, oneDark, foldGutter, foldKeymap, keymap, searchKeymap, highlightSelectionMatches } = window.CodeMirror6;
         
         // Clear the result output div first
         this.elements.resultOutput.innerHTML = '';
+        
+        // Custom extension to prevent editing but allow search
+        const readOnlyExtension = EditorView.domEventHandlers({
+            beforeinput: (event, view) => {
+                // Allow search-related events but prevent content changes
+                if (event.inputType === 'insertText' || 
+                    event.inputType === 'insertCompositionText' ||
+                    event.inputType === 'deleteContentBackward' ||
+                    event.inputType === 'deleteContentForward') {
+                    event.preventDefault();
+                    return true;
+                }
+                return false;
+            },
+            keydown: (event, view) => {
+                // Allow search shortcuts and navigation
+                if (event.ctrlKey || event.metaKey) {
+                    if (event.key === 'f' || event.key === 'g' || event.key === 'h') {
+                        return false; // Allow search shortcuts
+                    }
+                }
+                // Allow arrow keys, page up/down, home, end for navigation
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
+                    return false;
+                }
+                // Prevent other key inputs that would modify content
+                if (event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Enter') {
+                    event.preventDefault();
+                    return true;
+                }
+                return false;
+            }
+        });
         
         // Setup result editor with CodeMirror 6 for better display and folding
         const resultState = EditorState.create({
@@ -142,9 +205,13 @@ class TTPEditor {
                 basicSetup,
                 json(), // Use JSON mode for better folding
                 oneDark,
-                // Note: foldGutter() might be included in basicSetup already
-                keymap.of(foldKeymap), // Add fold keyboard shortcuts
-                EditorView.editable.of(false) // Read-only
+                highlightSelectionMatches(),
+                keymap.of([...foldKeymap, ...searchKeymap]), // Add fold and search keyboard shortcuts
+                readOnlyExtension, // Custom read-only extension that allows search
+                EditorView.theme({
+                    "&": { height: "100%" },
+                    ".cm-scroller": { overflow: "auto" }
+                })
             ]
         });
         
@@ -153,7 +220,7 @@ class TTPEditor {
             parent: this.elements.resultOutput
         });
         
-        console.log('CodeMirror 6 result editor initialized with JSON folding support');
+        console.log('CodeMirror 6 result editor initialized with JSON folding and search support');
     }
 
     setupEventListeners() {
@@ -177,7 +244,13 @@ class TTPEditor {
 
         // Global vars modal
         this.setupGlobalVarsModal();
-        
+
+        // Functions modal
+        this.setupFunctionsModal();
+
+        // Lookups modal
+        this.setupLookupsModal();
+
         // Check initial state of auto-process checkbox
         this.isAutoProcessEnabled = this.elements.autoProcess.checked;
     }
@@ -259,6 +332,599 @@ class TTPEditor {
         });
     }
 
+    setupFunctionsModal() {
+        // Functions button
+        this.elements.functionsBtn.addEventListener('click', () => {
+            this.openFunctionsModal();
+        });
+
+        // Modal close buttons
+        this.elements.functionsModal.querySelector('.close').addEventListener('click', () => {
+            this.closeFunctionsModal();
+        });
+
+        this.elements.cancelFunctionsBtn.addEventListener('click', () => {
+            this.closeFunctionsModal();
+        });
+
+        // Add function button
+        this.elements.addFunctionBtn.addEventListener('click', () => {
+            this.addFunctionItem();
+        });
+
+        // Modal action buttons
+        this.elements.saveFunctionsBtn.addEventListener('click', () => {
+            this.saveFunctions();
+        });
+
+        this.elements.clearFunctionsBtn.addEventListener('click', () => {
+            this.clearFunctions();
+        });
+
+        // Close modal when clicking outside
+        this.elements.functionsModal.addEventListener('click', (e) => {
+            if (e.target === this.elements.functionsModal) {
+                this.closeFunctionsModal();
+            }
+        });
+    }
+
+    openFunctionsModal() {
+        this.elements.functionsModal.style.display = 'block';
+        this.loadFunctions();
+    }
+
+    closeFunctionsModal() {
+        this.elements.functionsModal.style.display = 'none';
+        // Clean up any editors
+        this.functionEditors.clear();
+    }
+
+    loadFunctions() {
+        // Clear existing functions
+        this.elements.functionsContainer.innerHTML = '';
+
+        // Load functions from processor
+        if (this.ttpProcessor && this.ttpProcessor.customFunctions) {
+            this.functions = [...this.ttpProcessor.customFunctions];
+        }
+
+        // If no functions, add one by default
+        if (this.functions.length === 0) {
+            this.addFunctionItem();
+        } else {
+            // Load existing functions
+            this.functions.forEach(func => {
+                this.createFunctionItem(func);
+            });
+        }
+    }
+
+    addFunctionItem() {
+        const newFunction = {
+            id: `func_${++this.functionCounter}`,
+            scope: 'match',
+            name: '',
+            add_ttp: false,
+            code: `def my_function(data):
+    """
+    Custom function for TTP processing
+
+    Args:
+        data: Input data to process
+
+    Returns:
+        Processed data
+    """
+    return data.strip()`
+        };
+
+        this.functions.push(newFunction);
+        this.createFunctionItem(newFunction);
+    }
+
+    createFunctionItem(func) {
+        const container = document.createElement('div');
+        container.className = 'function-item';
+        container.dataset.id = func.id;
+
+        container.innerHTML = `
+            <div class="function-header" onclick="this.classList.toggle('collapsed')">
+                <div class="function-title">
+                    <span class="function-collapse-icon">▼</span>
+                    <span>Function: ${func.name || 'Unnamed'}</span>
+                </div>
+                <div class="function-controls">
+                    <button class="function-remove-btn" onclick="event.stopPropagation(); this.closest('.function-item').remove();">Remove</button>
+                </div>
+            </div>
+            <div class="function-body">
+                <div class="function-form">
+                    <div class="function-form-group">
+                        <label>Scope (required):</label>
+                        <select class="function-scope">
+                            <option value="match" ${func.scope === 'match' ? 'selected' : ''}>match</option>
+                            <option value="group" ${func.scope === 'group' ? 'selected' : ''}>group</option>
+                            <option value="input" ${func.scope === 'input' ? 'selected' : ''}>input</option>
+                            <option value="output" ${func.scope === 'output' ? 'selected' : ''}>output</option>
+                            <option value="returners" ${func.scope === 'returners' ? 'selected' : ''}>returners</option>
+                            <option value="formatters" ${func.scope === 'formatters' ? 'selected' : ''}>formatters</option>
+                            <option value="variable" ${func.scope === 'variable' ? 'selected' : ''}>variable</option>
+                            <option value="macro" ${func.scope === 'macro' ? 'selected' : ''}>macro</option>
+                        </select>
+                    </div>
+                    <div class="function-form-group">
+                        <label>Name (optional):</label>
+                        <input type="text" class="function-name" value="${func.name || ''}" placeholder="Optional function name">
+                    </div>
+                    <div class="function-form-group">
+                        <div class="function-checkbox-group">
+                            <input type="checkbox" class="function-add-ttp" ${func.add_ttp ? 'checked' : ''}>
+                            <label>Add TTP</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="function-form-group full-width">
+                    <label>Python Code (required):</label>
+                    <div class="function-code-editor" data-function-id="${func.id}"></div>
+                </div>
+            </div>
+        `;
+
+        this.elements.functionsContainer.appendChild(container);
+
+        // Initialize CodeMirror editor for this function
+        this.initializeFunctionEditor(func.id, func.code || '');
+
+        // Add event listeners for remove button
+        const removeBtn = container.querySelector('.function-remove-btn');
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.removeFunctionItem(func.id);
+        });
+    }
+
+    initializeFunctionEditor(functionId, code) {
+        const { EditorView, EditorState, basicSetup, python, oneDark } = window.CodeMirror6;
+        const editorContainer = document.querySelector(`[data-function-id="${functionId}"]`);
+
+        if (!editorContainer) return;
+
+        const editor = new EditorView({
+            state: EditorState.create({
+                doc: code,
+                extensions: [
+                    basicSetup,
+                    python(),
+                    oneDark,
+                    EditorView.theme({
+                        "&": { height: "200px" },
+                        ".cm-scroller": { overflow: "auto" }
+                    })
+                ]
+            }),
+            parent: editorContainer
+        });
+
+        this.functionEditors.set(functionId, editor);
+    }
+
+    removeFunctionItem(functionId) {
+        // Remove from functions array
+        this.functions = this.functions.filter(f => f.id !== functionId);
+
+        // Clean up editor
+        if (this.functionEditors.has(functionId)) {
+            this.functionEditors.delete(functionId);
+        }
+
+        // Remove DOM element
+        const item = document.querySelector(`[data-id="${functionId}"]`);
+        if (item) {
+            item.remove();
+        }
+    }
+
+    async saveFunctions() {
+        // Collect function data from UI
+        const functions = [];
+
+        this.functions.forEach(func => {
+            const container = document.querySelector(`[data-id="${func.id}"]`);
+            if (!container) return;
+
+            const scope = container.querySelector('.function-scope').value;
+            const name = container.querySelector('.function-name').value.trim();
+            const addTtp = container.querySelector('.function-add-ttp').checked;
+
+            // Get code from editor
+            let code = '';
+            if (this.functionEditors.has(func.id)) {
+                code = this.functionEditors.get(func.id).state.doc.toString();
+            }
+
+            if (scope && code.trim()) {
+                functions.push({
+                    id: func.id,
+                    scope: scope,
+                    name: name || null,
+                    add_ttp: addTtp,
+                    code: code
+                });
+            }
+        });
+
+        try {
+            // Update processor (this will reinitialize Python)
+            await this.ttpProcessor.setCustomFunctions(functions);
+            this.closeFunctionsModal();
+
+            // Trigger auto-process if enabled
+            if (this.isAutoProcessEnabled) {
+                this.scheduleAutoProcess();
+            }
+        } catch (error) {
+            console.error('Error saving functions:', error);
+            alert('Error saving functions: ' + error.message);
+        }
+    }
+
+    async clearFunctions() {
+        this.functions = [];
+        this.functionEditors.clear();
+        this.elements.functionsContainer.innerHTML = '';
+
+        try {
+            await this.ttpProcessor.clearCustomFunctions();
+
+            // Trigger auto-process if enabled
+            if (this.isAutoProcessEnabled) {
+                this.scheduleAutoProcess();
+            }
+        } catch (error) {
+            console.error('Error clearing functions:', error);
+            alert('Error clearing functions: ' + error.message);
+        }
+    }
+
+    setupLookupsModal() {
+        // Lookups button
+        this.elements.lookupsBtn.addEventListener('click', () => {
+            this.openLookupsModal();
+        });
+
+        // Modal close buttons
+        this.elements.lookupsModal.querySelector('.close').addEventListener('click', () => {
+            this.closeLookupsModal();
+        });
+
+        this.elements.cancelLookupsBtn.addEventListener('click', () => {
+            this.closeLookupsModal();
+        });
+
+        // Add lookup button
+        this.elements.addLookupBtn.addEventListener('click', () => {
+            this.addLookupItem();
+        });
+
+        // Modal action buttons
+        this.elements.saveLookupsBtn.addEventListener('click', () => {
+            this.saveLookups();
+        });
+
+        this.elements.clearLookupsBtn.addEventListener('click', () => {
+            this.clearLookups();
+        });
+
+        // Close modal when clicking outside
+        this.elements.lookupsModal.addEventListener('click', (e) => {
+            if (e.target === this.elements.lookupsModal) {
+                this.closeLookupsModal();
+            }
+        });
+    }
+
+    openLookupsModal() {
+        this.elements.lookupsModal.style.display = 'block';
+        this.loadLookups();
+    }
+
+    closeLookupsModal() {
+        this.elements.lookupsModal.style.display = 'none';
+        // Clean up any editors
+        this.lookupEditors.clear();
+    }
+
+    loadLookups() {
+        // Clear existing lookups
+        this.elements.lookupsContainer.innerHTML = '';
+
+        // Load lookups from processor
+        if (this.ttpProcessor && this.ttpProcessor.lookupTables) {
+            this.lookupTables = [...this.ttpProcessor.lookupTables];
+        }
+
+        // If no lookups, add one by default
+        if (this.lookupTables.length === 0) {
+            this.addLookupItem();
+        } else {
+            // Load existing lookups
+            this.lookupTables.forEach(lookup => {
+                this.createLookupItem(lookup);
+            });
+        }
+    }
+
+    addLookupItem() {
+        const newLookup = {
+            id: `lookup_${++this.lookupCounter}`,
+            name: '',
+            load: 'python',
+            textData: `{
+    "device1": {"ip": "192.168.1.1", "hostname": "router1"},
+    "device2": {"ip": "192.168.1.2", "hostname": "router2"}
+}`
+        };
+
+        this.lookupTables.push(newLookup);
+        this.createLookupItem(newLookup);
+    }
+
+    createLookupItem(lookup) {
+        const container = document.createElement('div');
+        container.className = 'lookup-item';
+        container.dataset.id = lookup.id;
+
+        container.innerHTML = `
+            <div class="lookup-header" onclick="this.classList.toggle('collapsed')">
+                <div class="lookup-title">
+                    <span class="lookup-collapse-icon">▼</span>
+                    <span>Lookup: ${lookup.name || 'Unnamed'}</span>
+                </div>
+                <div class="lookup-controls">
+                    <button class="lookup-remove-btn" onclick="event.stopPropagation(); this.closest('.lookup-item').remove();">Remove</button>
+                </div>
+            </div>
+            <div class="lookup-body">
+                <div class="lookup-form">
+                    <div class="lookup-form-group">
+                        <label>Name (required):</label>
+                        <input type="text" class="lookup-name" value="${lookup.name || ''}" placeholder="Lookup table name">
+                    </div>
+                    <div class="lookup-form-group">
+                        <label>Load format:</label>
+                        <select class="lookup-load">
+                            <option value="python" ${lookup.load === 'python' ? 'selected' : ''}>python</option>
+                            <option value="json" ${lookup.load === 'json' ? 'selected' : ''}>json</option>
+                            <option value="yaml" ${lookup.load === 'yaml' ? 'selected' : ''}>yaml</option>
+                            <option value="csv" ${lookup.load === 'csv' ? 'selected' : ''}>csv</option>
+                            <option value="ini" ${lookup.load === 'ini' ? 'selected' : ''}>ini</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="lookup-form-group full-width">
+                    <label>Text Data (required):</label>
+                    <div class="lookup-data-editor" data-lookup-id="${lookup.id}"></div>
+                </div>
+            </div>
+        `;
+
+        this.elements.lookupsContainer.appendChild(container);
+
+        // Initialize CodeMirror editor for this lookup
+        this.initializeLookupEditor(lookup.id, lookup.textData || '', lookup.load);
+
+        // Add event listeners
+        const removeBtn = container.querySelector('.lookup-remove-btn');
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.removeLookupItem(lookup.id);
+        });
+
+        // Add event listener for load format changes
+        const loadSelect = container.querySelector('.lookup-load');
+        loadSelect.addEventListener('change', (e) => {
+            this.updateLookupEditorMode(lookup.id, e.target.value);
+        });
+    }
+
+    initializeLookupEditor(lookupId, textData, loadFormat) {
+        const { EditorView, EditorState, basicSetup, json, yaml, python, oneDark } = window.CodeMirror6;
+        const editorContainer = document.querySelector(`[data-lookup-id="${lookupId}"]`);
+
+        if (!editorContainer) return;
+
+        // Choose language extension based on load format
+        let languageExtension;
+        switch (loadFormat) {
+            case 'json':
+                languageExtension = json();
+                break;
+            case 'yaml':
+                languageExtension = yaml();
+                break;
+            case 'python':
+            case 'csv':
+            case 'ini':
+            default:
+                languageExtension = python(); // Use python for python dict format, plain for others
+                break;
+        }
+
+        const editor = new EditorView({
+            state: EditorState.create({
+                doc: textData,
+                extensions: [
+                    basicSetup,
+                    languageExtension,
+                    oneDark,
+                    EditorView.theme({
+                        "&": { height: "200px" },
+                        ".cm-scroller": { overflow: "auto" }
+                    })
+                ]
+            }),
+            parent: editorContainer
+        });
+
+        this.lookupEditors.set(lookupId, editor);
+    }
+
+    updateLookupEditorMode(lookupId, loadFormat) {
+        const editor = this.lookupEditors.get(lookupId);
+        if (!editor) return;
+
+        const { EditorView, EditorState, basicSetup, json, yaml, python, oneDark } = window.CodeMirror6;
+
+        // Choose language extension and default content based on load format
+        let languageExtension;
+        let defaultContent = editor.state.doc.toString(); // Keep existing content
+
+        switch (loadFormat) {
+            case 'json':
+                languageExtension = json();
+                if (!defaultContent.trim()) {
+                    defaultContent = `{
+    "device1": {"ip": "192.168.1.1", "hostname": "router1"},
+    "device2": {"ip": "192.168.1.2", "hostname": "router2"}
+}`;
+                }
+                break;
+            case 'yaml':
+                languageExtension = yaml();
+                if (!defaultContent.trim()) {
+                    defaultContent = `device1:
+  ip: 192.168.1.1
+  hostname: router1
+device2:
+  ip: 192.168.1.2
+  hostname: router2`;
+                }
+                break;
+            case 'csv':
+                languageExtension = python(); // Plain text
+                if (!defaultContent.trim()) {
+                    defaultContent = `hostname,ip,device_type
+router1,192.168.1.1,cisco
+router2,192.168.1.2,cisco`;
+                }
+                break;
+            case 'ini':
+                languageExtension = python(); // Plain text
+                if (!defaultContent.trim()) {
+                    defaultContent = `[device1]
+hostname = router1
+ip = 192.168.1.1
+
+[device2]
+hostname = router2
+ip = 192.168.1.2`;
+                }
+                break;
+            case 'python':
+            default:
+                languageExtension = python();
+                if (!defaultContent.trim()) {
+                    defaultContent = `{
+    "device1": {"ip": "192.168.1.1", "hostname": "router1"},
+    "device2": {"ip": "192.168.1.2", "hostname": "router2"}
+}`;
+                }
+                break;
+        }
+
+        const newState = EditorState.create({
+            doc: defaultContent,
+            extensions: [
+                basicSetup,
+                languageExtension,
+                oneDark,
+                EditorView.theme({
+                    "&": { height: "200px" },
+                    ".cm-scroller": { overflow: "auto" }
+                })
+            ]
+        });
+
+        editor.setState(newState);
+    }
+
+    removeLookupItem(lookupId) {
+        // Remove from lookups array
+        this.lookupTables = this.lookupTables.filter(l => l.id !== lookupId);
+
+        // Clean up editor
+        if (this.lookupEditors.has(lookupId)) {
+            this.lookupEditors.delete(lookupId);
+        }
+
+        // Remove DOM element
+        const item = document.querySelector(`[data-id="${lookupId}"]`);
+        if (item) {
+            item.remove();
+        }
+    }
+
+    async saveLookups() {
+        // Collect lookup data from UI
+        const lookups = [];
+
+        this.lookupTables.forEach(lookup => {
+            const container = document.querySelector(`[data-id="${lookup.id}"]`);
+            if (!container) return;
+
+            const name = container.querySelector('.lookup-name').value.trim();
+            const load = container.querySelector('.lookup-load').value;
+
+            // Get text data from editor
+            let textData = '';
+            if (this.lookupEditors.has(lookup.id)) {
+                textData = this.lookupEditors.get(lookup.id).state.doc.toString();
+            }
+
+            if (name && textData.trim()) {
+                lookups.push({
+                    id: lookup.id,
+                    name: name,
+                    load: load,
+                    textData: textData
+                });
+            }
+        });
+
+        try {
+            // Update processor
+            await this.ttpProcessor.setLookupTables(lookups);
+            this.closeLookupsModal();
+
+            // Trigger auto-process if enabled
+            if (this.isAutoProcessEnabled) {
+                this.scheduleAutoProcess();
+            }
+        } catch (error) {
+            console.error('Error saving lookups:', error);
+            alert('Error saving lookups: ' + error.message);
+        }
+    }
+
+    async clearLookups() {
+        this.lookupTables = [];
+        this.lookupEditors.clear();
+        this.elements.lookupsContainer.innerHTML = '';
+
+        try {
+            await this.ttpProcessor.clearLookupTables();
+
+            // Trigger auto-process if enabled
+            if (this.isAutoProcessEnabled) {
+                this.scheduleAutoProcess();
+            }
+        } catch (error) {
+            console.error('Error clearing lookups:', error);
+            alert('Error clearing lookups: ' + error.message);
+        }
+    }
+
     updateVarsEditorFormat() {
         if (!this.varsEditor) return;
 
@@ -335,39 +1001,69 @@ timezone: UTC`;
 
     setupPaneResizing() {
         const resizeHandles = document.querySelectorAll('.resize-handle');
+        console.log('Found resize handles:', resizeHandles.length);
         
-        resizeHandles.forEach(handle => {
+        resizeHandles.forEach((handle, index) => {
+            console.log(`Setting up resize handle ${index}:`, handle);
             let isResizing = false;
             let startX = 0;
-            let startWidth = 0;
+            let startLeftWidth = 0;
+            let startRightWidth = 0;
             let leftPane = null;
+            let rightPane = null;
             
             handle.addEventListener('mousedown', (e) => {
+                console.log('Resize handle mousedown triggered');
                 isResizing = true;
                 startX = e.clientX;
                 leftPane = handle.previousElementSibling;
-                startWidth = leftPane.offsetWidth;
+                rightPane = handle.nextElementSibling;
+                console.log('Left pane:', leftPane, 'Right pane:', rightPane);
+                
+                // Get current widths
+                startLeftWidth = leftPane.offsetWidth;
+                startRightWidth = rightPane.offsetWidth;
+                
+                // Add visual feedback
+                handle.classList.add('dragging');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
                 
                 document.addEventListener('mousemove', handleMouseMove);
                 document.addEventListener('mouseup', handleMouseUp);
                 e.preventDefault();
+                e.stopPropagation();
             });
             
             const handleMouseMove = (e) => {
                 if (!isResizing) return;
                 
                 const deltaX = e.clientX - startX;
-                const newWidth = startWidth + deltaX;
                 const containerWidth = leftPane.parentElement.offsetWidth;
-                const percentage = (newWidth / containerWidth) * 100;
                 
-                if (percentage > 10 && percentage < 80) {
-                    leftPane.style.width = percentage + '%';
+                // Calculate new widths
+                const newLeftWidth = startLeftWidth + deltaX;
+                const newRightWidth = startRightWidth - deltaX;
+                
+                // Convert to percentages
+                const leftPercentage = (newLeftWidth / containerWidth) * 100;
+                const rightPercentage = (newRightWidth / containerWidth) * 100;
+                
+                // Apply constraints (minimum 15%, maximum 70% for each pane)
+                if (leftPercentage >= 15 && leftPercentage <= 70 && 
+                    rightPercentage >= 15 && rightPercentage <= 70) {
+                    leftPane.style.flex = `0 0 ${leftPercentage}%`;
+                    leftPane.style.width = leftPercentage + '%';
+                    rightPane.style.flex = `0 0 ${rightPercentage}%`;
+                    rightPane.style.width = rightPercentage + '%';
                 }
             };
             
             const handleMouseUp = () => {
                 isResizing = false;
+                handle.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
             };
@@ -524,14 +1220,51 @@ timezone: UTC`;
     }
 
     updateResultEditor(content, languageExtension = null) {
-        const { EditorView, EditorState, basicSetup, json, oneDark, foldGutter, foldKeymap, keymap } = window.CodeMirror6;
+        const { EditorView, EditorState, basicSetup, json, oneDark, foldGutter, foldKeymap, keymap, searchKeymap, highlightSelectionMatches } = window.CodeMirror6;
+        
+        // Custom extension to prevent editing but allow search
+        const readOnlyExtension = EditorView.domEventHandlers({
+            beforeinput: (event, view) => {
+                // Allow search-related events but prevent content changes
+                if (event.inputType === 'insertText' || 
+                    event.inputType === 'insertCompositionText' ||
+                    event.inputType === 'deleteContentBackward' ||
+                    event.inputType === 'deleteContentForward') {
+                    event.preventDefault();
+                    return true;
+                }
+                return false;
+            },
+            keydown: (event, view) => {
+                // Allow search shortcuts and navigation
+                if (event.ctrlKey || event.metaKey) {
+                    if (event.key === 'f' || event.key === 'g' || event.key === 'h') {
+                        return false; // Allow search shortcuts
+                    }
+                }
+                // Allow arrow keys, page up/down, home, end for navigation
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
+                    return false;
+                }
+                // Prevent other key inputs that would modify content
+                if (event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Enter') {
+                    event.preventDefault();
+                    return true;
+                }
+                return false;
+            }
+        });
         
         const extensions = [
             basicSetup,
             oneDark,
-            // Note: foldGutter() might be included in basicSetup already
-            keymap.of(foldKeymap), // Add fold keyboard shortcuts
-            EditorView.editable.of(false)
+            highlightSelectionMatches(),
+            keymap.of([...foldKeymap, ...searchKeymap]), // Add fold and search keyboard shortcuts
+            readOnlyExtension, // Custom read-only extension that allows search
+            EditorView.theme({
+                "&": { height: "100%" },
+                ".cm-scroller": { overflow: "auto" }
+            })
         ];
         
         if (languageExtension) {
@@ -547,7 +1280,7 @@ timezone: UTC`;
         
         this.resultEditor.setState(newState);
         
-        console.log('CodeMirror 6 content updated with proper JSON folding support');
+        console.log('CodeMirror 6 content updated with proper JSON folding and search support');
     }
 
     showError(message) {
