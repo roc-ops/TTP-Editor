@@ -34,6 +34,241 @@ class TTPEditor {
         this.lookupEditors = new Map();
     }
 
+    registerTTPLanguage() {
+        // Register TTP language
+        window.MonacoLanguages.register({ id: 'ttp' });
+        
+        // Set language configuration
+        window.MonacoLanguages.setLanguageConfiguration('ttp', {
+            comments: {
+                lineComment: '#',
+                blockComment: ['{#', '#}']
+            },
+            brackets: [
+                ['{', '}'],
+                ['[', ']'],
+                ['(', ')'],
+                ['<', '>'],
+                ['"', '"'],
+                ["'", "'"]
+            ],
+            autoClosingPairs: [
+                { open: '{', close: '}' },
+                { open: '[', close: ']' },
+                { open: '(', close: ')' },
+                { open: '<', close: '>' },
+                { open: '"', close: '"' },
+                { open: "'", close: "'" }
+            ],
+            surroundingPairs: [
+                { open: '{', close: '}' },
+                { open: '[', close: ']' },
+                { open: '(', close: ')' },
+                { open: '<', close: '>' },
+                { open: '"', close: '"' },
+                { open: "'", close: "'" }
+            ]
+        });
+
+        // Set token provider
+        window.MonacoLanguages.setMonarchTokensProvider('ttp', {
+            tokenizer: {
+                root: [
+                    // TTP comments
+                    [/{#.*?#}/, 'comment.ttp'],
+                    
+                    // XML-like template tags
+                    [/<template\s+name\s*=\s*["'][^"']*["']/, 'keyword.template'],
+                    [/<template\s+name\s*=\s*[^>]*>/, 'keyword.template'],
+                    [/<template[^>]*>/, 'keyword.template'],
+                    [/<\/template>/, 'keyword.template'],
+                    
+                    // Group tags
+                    [/<group[^>]*>/, 'keyword.group'],
+                    [/<\/group>/, 'keyword.group'],
+                    
+                    // Macro tags
+                    [/<macro[^>]*>/, 'keyword.macro'],
+                    [/<\/macro>/, 'keyword.macro'],
+                    
+                    // Doc tags
+                    [/<doc[^>]*>/, 'keyword.doc'],
+                    [/<\/doc>/, 'keyword.doc'],
+                    
+                    // TTP variable syntax
+                    [/{{[^}]+}}/, 'variable.ttp'],
+                    
+                    // String literals
+                    [/"[^"]*"/, 'string'],
+                    [/'[^']*'/, 'string'],
+                    
+                    // Numbers
+                    [/\d+\.?\d*/, 'number'],
+                    
+                    // TTP-specific functions
+                    [/\b(to_int|to_float|to_string|re|contains|split|join|strip|upper|lower|replace|match|search|findall|sub|subn|escape|unescape|base64|unbase64|md5|sha1|sha256|sha512|uuid|timestamp|datetime|now|today|yesterday|tomorrow|strftime|strptime|timezone|utc|local|isoformat|fromisoformat|timedelta|total_seconds|days|seconds|microseconds|max|min|sum|len|sorted|reversed|enumerate|zip|map|filter|reduce|any|all|bool|int|float|str|list|dict|set|tuple|type|isinstance|issubclass|hasattr|getattr|setattr|delattr|dir|vars|locals|globals|callable|eval|exec|compile|open|file|input|print|range|xrange|iter|next|iteritems|iterkeys|itervalues|items|keys|values|pop|popitem|clear|copy|update|setdefault|get|fromkeys|index|count|append|extend|insert|remove|reverse|sort)\b/, 'function.ttp'],
+                    
+                    // Python keywords (for macro content)
+                    [/\b(and|as|assert|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|not|or|pass|print|raise|return|try|while|with|yield|True|False|None)\b/, 'keyword.python'],
+                    
+                    // Operators
+                    [/[+\-*/%=<>!&|^~]/, 'operator'],
+                    
+                    // Punctuation
+                    [/[.,;:(){}[\]<>]/, 'punctuation'],
+                    
+                    // Identifiers
+                    [/\b[a-zA-Z_][a-zA-Z0-9_]*\b/, 'identifier']
+                ]
+            }
+        });
+
+        // Register completion provider
+        window.MonacoLanguages.registerCompletionItemProvider('ttp', {
+            provideCompletionItems: (model, position) => {
+                const suggestions = [
+                    // TTP template structure
+                    {
+                        label: 'template',
+                        kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                        insertText: '<template name="${1:template_name}">\n\t${2:template_content}\n</template>',
+                        insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        documentation: 'TTP template definition'
+                    },
+                    {
+                        label: 'group',
+                        kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                        insertText: '<group name="${1:group_name}">\n\t${2:group_content}\n</group>',
+                        insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        documentation: 'TTP group definition'
+                    },
+                    {
+                        label: 'macro',
+                        kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                        insertText: '<macro name="${1:macro_name}">\n\t${2:macro_content}\n</macro>',
+                        insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        documentation: 'TTP macro definition'
+                    },
+                    
+                    // TTP functions
+                    { label: 'to_int', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to integer' },
+                    { label: 'to_float', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to float' },
+                    { label: 'to_string', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to string' },
+                    { label: 're', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Regular expression matching' },
+                    { label: 'contains', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Check if text contains substring' },
+                    { label: 'split', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Split text by delimiter' },
+                    { label: 'join', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Join list elements' },
+                    { label: 'strip', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Strip whitespace' },
+                    { label: 'upper', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to uppercase' },
+                    { label: 'lower', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to lowercase' },
+                    { label: 'replace', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Replace text' },
+                    { label: 'match', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Match pattern' },
+                    { label: 'search', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Search pattern' },
+                    { label: 'findall', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Find all matches' },
+                    { label: 'sub', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Substitute pattern' },
+                    { label: 'subn', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Substitute pattern with count' },
+                    { label: 'escape', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Escape special characters' },
+                    { label: 'unescape', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Unescape special characters' },
+                    { label: 'base64', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Base64 encode' },
+                    { label: 'unbase64', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Base64 decode' },
+                    { label: 'md5', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'MD5 hash' },
+                    { label: 'sha1', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'SHA1 hash' },
+                    { label: 'sha256', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'SHA256 hash' },
+                    { label: 'sha512', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'SHA512 hash' },
+                    { label: 'uuid', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Generate UUID' },
+                    { label: 'timestamp', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Current timestamp' },
+                    { label: 'datetime', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Current datetime' },
+                    { label: 'now', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Current time' },
+                    { label: 'today', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Today\'s date' },
+                    { label: 'yesterday', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Yesterday\'s date' },
+                    { label: 'tomorrow', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Tomorrow\'s date' },
+                    { label: 'strftime', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Format datetime' },
+                    { label: 'strptime', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Parse datetime' },
+                    { label: 'timezone', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Timezone conversion' },
+                    { label: 'utc', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'UTC timezone' },
+                    { label: 'local', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Local timezone' },
+                    { label: 'isoformat', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'ISO format datetime' },
+                    { label: 'fromisoformat', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Parse ISO format' },
+                    { label: 'timedelta', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Time difference' },
+                    { label: 'total_seconds', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Total seconds' },
+                    { label: 'days', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Days component' },
+                    { label: 'seconds', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Seconds component' },
+                    { label: 'microseconds', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Microseconds component' },
+                    { label: 'max', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Maximum value' },
+                    { label: 'min', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Minimum value' },
+                    { label: 'sum', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Sum of values' },
+                    { label: 'len', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Length of object' },
+                    { label: 'sorted', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Sort iterable' },
+                    { label: 'reversed', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Reverse iterable' },
+                    { label: 'enumerate', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Enumerate with index' },
+                    { label: 'zip', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Zip iterables' },
+                    { label: 'map', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Map function to iterable' },
+                    { label: 'filter', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Filter iterable' },
+                    { label: 'reduce', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Reduce iterable' },
+                    { label: 'any', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Any true value' },
+                    { label: 'all', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'All true values' },
+                    { label: 'bool', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to boolean' },
+                    { label: 'int', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to integer' },
+                    { label: 'float', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to float' },
+                    { label: 'str', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to string' },
+                    { label: 'list', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to list' },
+                    { label: 'dict', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to dictionary' },
+                    { label: 'set', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to set' },
+                    { label: 'tuple', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to tuple' },
+                    { label: 'type', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get type of object' },
+                    { label: 'isinstance', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Check instance type' },
+                    { label: 'issubclass', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Check subclass' },
+                    { label: 'hasattr', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Check attribute exists' },
+                    { label: 'getattr', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get attribute' },
+                    { label: 'setattr', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Set attribute' },
+                    { label: 'delattr', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Delete attribute' },
+                    { label: 'dir', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'List attributes' },
+                    { label: 'vars', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get variables' },
+                    { label: 'locals', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Local variables' },
+                    { label: 'globals', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Global variables' },
+                    { label: 'callable', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Check if callable' },
+                    { label: 'eval', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Evaluate expression' },
+                    { label: 'exec', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Execute code' },
+                    { label: 'compile', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Compile code' },
+                    { label: 'open', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Open file' },
+                    { label: 'file', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'File object' },
+                    { label: 'input', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get user input' },
+                    { label: 'print', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Print output' },
+                    { label: 'range', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Generate range' },
+                    { label: 'xrange', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Generate range (Python 2)' },
+                    { label: 'iter', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Create iterator' },
+                    { label: 'next', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get next item' },
+                    { label: 'iteritems', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Iterate items' },
+                    { label: 'iterkeys', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Iterate keys' },
+                    { label: 'itervalues', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Iterate values' },
+                    { label: 'items', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get items' },
+                    { label: 'keys', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get keys' },
+                    { label: 'values', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get values' },
+                    { label: 'pop', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Pop item' },
+                    { label: 'popitem', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Pop arbitrary item' },
+                    { label: 'clear', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Clear collection' },
+                    { label: 'copy', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Copy collection' },
+                    { label: 'update', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Update collection' },
+                    { label: 'setdefault', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Set default value' },
+                    { label: 'get', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get value with default' },
+                    { label: 'fromkeys', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Create from keys' },
+                    { label: 'index', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Get index' },
+                    { label: 'count', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Count occurrences' },
+                    { label: 'append', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Append item' },
+                    { label: 'extend', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Extend list' },
+                    { label: 'insert', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Insert item' },
+                    { label: 'remove', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Remove item' },
+                    { label: 'reverse', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Reverse list' },
+                    { label: 'sort', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Sort list' }
+                ];
+                
+                return { suggestions };
+            }
+        });
+
+        console.log('TTP language registered with Monaco Editor');
+    }
+
     async init() {
         console.log('TTP Editor init started');
         
@@ -42,6 +277,9 @@ class TTPEditor {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
         console.log('Monaco Editor available');
+        
+        // Register TTP language
+        this.registerTTPLanguage();
         
         this.setupUI();
         this.setupEventListeners();
@@ -143,7 +381,7 @@ class TTPEditor {
         // Template editor
         this.templateEditor = window.MonacoEditor.create(this.elements.templateInput.parentElement, {
             value: this.elements.templateInput.value || '',
-            language: 'python',
+            language: 'ttp',
             theme: 'vs-dark',
             automaticLayout: true,
             minimap: { enabled: false },

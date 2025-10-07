@@ -594,6 +594,26 @@ body {
     font-weight: bold !important;
 }
 
+/* TTP syntax highlighting styles */
+.mtk1 { color: #d4d4d4; } /* Default text */
+.mtk2 { color: #ce9178; } /* String */
+.mtk3 { color: #b5cea8; } /* Comment */
+.mtk4 { color: #569cd6; } /* Keyword */
+.mtk5 { color: #4ec9b0; } /* Number */
+.mtk6 { color: #dcdcaa; } /* Function */
+.mtk7 { color: #9cdcfe; } /* Variable */
+.mtk8 { color: #f44747; } /* Error */
+
+/* TTP-specific token colors */
+.mtk9 { color: #ff6b6b; } /* TTP template tags */
+.mtk10 { color: #4ec9b0; } /* TTP group tags */
+.mtk11 { color: #ffd93d; } /* TTP macro tags */
+.mtk12 { color: #6bcf7f; } /* TTP doc tags */
+.mtk13 { color: #ff9f43; } /* TTP variables {{ }} */
+.mtk14 { color: #a8e6cf; } /* TTP functions */
+.mtk15 { color: #ff8a80; } /* Python keywords in TTP */
+.mtk16 { color: #b39ddb; } /* TTP comments {# #} */
+
 /* Template pane error indicator */
 .template-pane.has-error {
     border: 2px solid #ff4444;
