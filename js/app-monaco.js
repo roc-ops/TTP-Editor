@@ -125,7 +125,16 @@ class TTPEditor {
 
         // Register completion provider
         window.MonacoLanguages.registerCompletionItemProvider('ttp', {
+            triggerCharacters: ['{', '|', ' ', '<', '>', '(', ')', '"', "'"],
             provideCompletionItems: (model, position) => {
+                const word = model.getWordUntilPosition(position);
+                const range = {
+                    startLineNumber: position.lineNumber,
+                    endLineNumber: position.lineNumber,
+                    startColumn: word.startColumn,
+                    endColumn: word.endColumn
+                };
+
                 const suggestions = [
                     // TTP template structure
                     {
@@ -133,25 +142,28 @@ class TTPEditor {
                         kind: window.MonacoLanguages.CompletionItemKind.Keyword,
                         insertText: '<template name="${1:template_name}">\n\t${2:template_content}\n</template>',
                         insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        documentation: 'TTP template definition'
+                        documentation: 'TTP template definition',
+                        range: range
                     },
                     {
                         label: 'group',
                         kind: window.MonacoLanguages.CompletionItemKind.Keyword,
                         insertText: '<group name="${1:group_name}">\n\t${2:group_content}\n</group>',
                         insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        documentation: 'TTP group definition'
+                        documentation: 'TTP group definition',
+                        range: range
                     },
                     {
                         label: 'macro',
                         kind: window.MonacoLanguages.CompletionItemKind.Keyword,
                         insertText: '<macro name="${1:macro_name}">\n\t${2:macro_content}\n</macro>',
                         insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        documentation: 'TTP macro definition'
+                        documentation: 'TTP macro definition',
+                        range: range
                     },
                     
                     // TTP functions
-                    { label: 'to_int', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to integer' },
+                    { label: 'to_int', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to integer', range: range },
                     { label: 'to_float', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to float' },
                     { label: 'to_string', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to string' },
                     { label: 're', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Regular expression matching' },
@@ -262,7 +274,150 @@ class TTPEditor {
                     { label: 'sort', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Sort list' }
                 ];
                 
+                // Add range to all suggestions
+                suggestions.forEach(suggestion => {
+                    if (!suggestion.range) {
+                        suggestion.range = range;
+                    }
+                });
+                
+                console.log('TTP completion triggered:', suggestions.length, 'suggestions');
                 return { suggestions };
+            }
+        });
+
+        // Register hover provider
+        window.MonacoLanguages.registerHoverProvider('ttp', {
+            provideHover: (model, position) => {
+                const word = model.getWordAtPosition(position);
+                if (!word) return null;
+
+                const wordText = word.word;
+                
+                // TTP function documentation
+                const ttpFunctions = {
+                    'to_int': 'Convert value to integer',
+                    'to_float': 'Convert value to float',
+                    'to_string': 'Convert value to string',
+                    're': 'Regular expression matching',
+                    'contains': 'Check if text contains substring',
+                    'split': 'Split text by delimiter',
+                    'join': 'Join list elements',
+                    'strip': 'Strip whitespace',
+                    'upper': 'Convert to uppercase',
+                    'lower': 'Convert to lowercase',
+                    'replace': 'Replace text',
+                    'match': 'Match pattern',
+                    'search': 'Search pattern',
+                    'findall': 'Find all matches',
+                    'sub': 'Substitute pattern',
+                    'subn': 'Substitute pattern with count',
+                    'escape': 'Escape special characters',
+                    'unescape': 'Unescape special characters',
+                    'base64': 'Base64 encode',
+                    'unbase64': 'Base64 decode',
+                    'md5': 'MD5 hash',
+                    'sha1': 'SHA1 hash',
+                    'sha256': 'SHA256 hash',
+                    'sha512': 'SHA512 hash',
+                    'uuid': 'Generate UUID',
+                    'timestamp': 'Current timestamp',
+                    'datetime': 'Current datetime',
+                    'now': 'Current time',
+                    'today': 'Today\'s date',
+                    'yesterday': 'Yesterday\'s date',
+                    'tomorrow': 'Tomorrow\'s date',
+                    'strftime': 'Format datetime',
+                    'strptime': 'Parse datetime',
+                    'timezone': 'Timezone conversion',
+                    'utc': 'UTC timezone',
+                    'local': 'Local timezone',
+                    'isoformat': 'ISO format datetime',
+                    'fromisoformat': 'Parse ISO format',
+                    'timedelta': 'Time difference',
+                    'total_seconds': 'Total seconds',
+                    'days': 'Days component',
+                    'seconds': 'Seconds component',
+                    'microseconds': 'Microseconds component',
+                    'max': 'Maximum value',
+                    'min': 'Minimum value',
+                    'sum': 'Sum of values',
+                    'len': 'Length of object',
+                    'sorted': 'Sort iterable',
+                    'reversed': 'Reverse iterable',
+                    'enumerate': 'Enumerate with index',
+                    'zip': 'Zip iterables',
+                    'map': 'Map function to iterable',
+                    'filter': 'Filter iterable',
+                    'reduce': 'Reduce iterable',
+                    'any': 'Any true value',
+                    'all': 'All true values',
+                    'bool': 'Convert to boolean',
+                    'int': 'Convert to integer',
+                    'float': 'Convert to float',
+                    'str': 'Convert to string',
+                    'list': 'Convert to list',
+                    'dict': 'Convert to dictionary',
+                    'set': 'Convert to set',
+                    'tuple': 'Convert to tuple',
+                    'type': 'Get type of object',
+                    'isinstance': 'Check instance type',
+                    'issubclass': 'Check subclass',
+                    'hasattr': 'Check attribute exists',
+                    'getattr': 'Get attribute',
+                    'setattr': 'Set attribute',
+                    'delattr': 'Delete attribute',
+                    'dir': 'List attributes',
+                    'vars': 'Get variables',
+                    'locals': 'Local variables',
+                    'globals': 'Global variables',
+                    'callable': 'Check if callable',
+                    'eval': 'Evaluate expression',
+                    'exec': 'Execute code',
+                    'compile': 'Compile code',
+                    'open': 'Open file',
+                    'file': 'File object',
+                    'input': 'Get user input',
+                    'print': 'Print output',
+                    'range': 'Generate range',
+                    'xrange': 'Generate range (Python 2)',
+                    'iter': 'Create iterator',
+                    'next': 'Get next item',
+                    'iteritems': 'Iterate items',
+                    'iterkeys': 'Iterate keys',
+                    'itervalues': 'Iterate values',
+                    'items': 'Get items',
+                    'keys': 'Get keys',
+                    'values': 'Get values',
+                    'pop': 'Pop item',
+                    'popitem': 'Pop arbitrary item',
+                    'clear': 'Clear collection',
+                    'copy': 'Copy collection',
+                    'update': 'Update collection',
+                    'setdefault': 'Set default value',
+                    'get': 'Get value with default',
+                    'fromkeys': 'Create from keys',
+                    'index': 'Get index',
+                    'count': 'Count occurrences',
+                    'append': 'Append item',
+                    'extend': 'Extend list',
+                    'insert': 'Insert item',
+                    'remove': 'Remove item',
+                    'reverse': 'Reverse list',
+                    'sort': 'Sort list'
+                };
+
+                if (ttpFunctions[wordText]) {
+                    return {
+                        range: new window.MonacoEditor.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
+                        contents: [
+                            { value: `**${wordText}**` },
+                            { value: ttpFunctions[wordText] }
+                        ]
+                    };
+                }
+
+                return null;
             }
         });
 
