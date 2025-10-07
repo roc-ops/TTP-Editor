@@ -10,6 +10,9 @@ class TTPEditor {
         this.templateEditor = null;
         this.resultEditor = null;
         
+        // Error decoration tracking
+        this.errorDecorationIds = [];
+        
         // Auto-processing
         this.autoProcessTimeout = null;
         this.autoProcessDelay = 1000;
@@ -143,6 +146,8 @@ class TTPEditor {
         this.templateEditor.onDidChangeModelContent(() => {
             this.validateInputs();
             this.scheduleAutoProcess();
+            // Clear error markers when template changes
+            this.clearErrorMarkers();
         });
     }
 
@@ -1040,6 +1045,7 @@ timezone: UTC`;
             this.displayResults(result);
         } catch (error) {
             console.error('Processing error:', error);
+            console.error('Error stack:', error.stack);
             this.showError(`Processing failed: ${error.message}`);
         }
     }
@@ -1115,15 +1121,19 @@ timezone: UTC`;
                 const lineMatch = result.error.message.match(/line (\d+)/);
                 if (lineMatch) {
                     let reportedLine = parseInt(lineMatch[1]);
-                    const templateLines = this.templateEditor.getModel().getLineCount();
                     
-                    // The error message uses 1-based line numbers, but Monaco uses 1-based too
-                    let lineNumber = reportedLine - 1;
-                    
-                    // Only show error marker if we don't already have one
-                    if (!this.hasErrorMarker) {
-                        this.showErrorMarker(lineNumber, result.error.message);
-                        this.hasErrorMarker = true;
+                    // Validate that we have a template editor and model
+                    if (this.templateEditor && this.templateEditor.getModel()) {
+                        const templateLines = this.templateEditor.getModel().getLineCount();
+                        
+                        // Ensure line number is within valid range
+                        let lineNumber = Math.max(0, Math.min(reportedLine - 1, templateLines - 1));
+                        
+                        // Only show error marker if we don't already have one
+                        if (!this.hasErrorMarker) {
+                            this.showErrorMarker(lineNumber, result.error.message);
+                            this.hasErrorMarker = true;
+                        }
                     }
                 }
             }
@@ -1163,8 +1173,12 @@ timezone: UTC`;
             templateHeader.innerHTML = `<span class="panel-title">TTP Template <span style="color: #ff6666;">⚠ Error at line ${lineNumber + 1}</span></span>`;
         }
         
-        // Add Monaco error marker
-        this.addMonacoErrorMarker(lineNumber, message);
+        // Add Monaco error marker only if template editor is available
+        if (this.templateEditor && this.templateEditor.getModel()) {
+            this.addMonacoErrorMarker(lineNumber, message);
+        } else {
+            console.warn('Template editor not available for error marking');
+        }
     }
 
     addMonacoErrorMarker(lineNumber, message) {
@@ -1174,25 +1188,37 @@ timezone: UTC`;
         // Add Monaco error marker
         const model = this.templateEditor.getModel();
         if (model) {
-            const lineContent = model.getLineContent(lineNumber + 1);
-            const endColumn = lineContent.length + 1;
+            const totalLines = model.getLineCount();
             
-            // Add error marker using Monaco's decoration API
-            const decorations = [{
-                range: {
-                    startLineNumber: lineNumber + 1,
-                    startColumn: 1,
-                    endLineNumber: lineNumber + 1,
-                    endColumn: endColumn
-                },
-                options: {
-                    className: 'monaco-error-line',
-                    glyphMarginClassName: 'monaco-error-glyph',
-                    hoverMessage: { value: `Error: ${message}` }
-                }
-            }];
+            // Ensure line number is within valid range (Monaco uses 1-based line numbers)
+            const validLineNumber = Math.max(1, Math.min(lineNumber + 1, totalLines));
             
-            this.templateEditor.deltaDecorations([], decorations);
+            try {
+                const lineContent = model.getLineContent(validLineNumber);
+                const endColumn = lineContent.length + 1;
+                
+                // Add error marker using Monaco's decoration API
+                const decorations = [{
+                    range: {
+                        startLineNumber: validLineNumber,
+                        startColumn: 1,
+                        endLineNumber: validLineNumber,
+                        endColumn: endColumn
+                    },
+                    options: {
+                        className: 'monaco-error-line',
+                        glyphMarginClassName: 'monaco-error-glyph',
+                        hoverMessage: { value: `Error: ${message}` }
+                    }
+                }];
+                
+                const decorationIds = this.templateEditor.deltaDecorations([], decorations);
+                this.errorDecorationIds = decorationIds;
+                console.log(`Added error marker at line ${validLineNumber} (original: ${lineNumber + 1})`);
+            } catch (error) {
+                console.error('Error adding Monaco error marker:', error);
+                // Fallback: just show the error in the pane header without line marker
+            }
         }
     }
 
@@ -1212,9 +1238,10 @@ timezone: UTC`;
             templateHeader.innerHTML = '<span class="panel-title">TTP Template</span>';
         }
         
-        // Clear Monaco error markers
-        if (this.templateEditor) {
-            this.templateEditor.deltaDecorations(this.templateEditor.getModel().getAllDecorations(), []);
+        // Clear Monaco error markers using stored decoration IDs
+        if (this.templateEditor && this.errorDecorationIds.length > 0) {
+            this.templateEditor.deltaDecorations(this.errorDecorationIds, []);
+            this.errorDecorationIds = [];
         }
         
         // Reset the error marker flag
