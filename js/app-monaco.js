@@ -13,6 +13,10 @@ class TTPEditor {
         // Error decoration tracking
         this.errorDecorationIds = [];
         
+        // URL configuration management
+        this.urlConfig = null;
+        this.workspaceName = null;
+        
         // Auto-processing
         this.autoProcessTimeout = null;
         this.autoProcessDelay = 1000;
@@ -49,6 +53,15 @@ class TTPEditor {
         await this.ttpProcessor.initialize();
         
         this.setupResultEditor();
+        
+        // Load configuration from URL parameters
+        this.loadConfigurationFromURL();
+        
+        // Apply stored URL configuration now that editors are ready
+        if (this.urlConfig) {
+            this.applyConfiguration(this.urlConfig);
+            this.urlConfig = null; // Clear after applying
+        }
         
         console.log('TTP Editor initialized successfully');
     }
@@ -90,7 +103,14 @@ class TTPEditor {
             addLookupBtn: document.getElementById('addLookupBtn'),
             saveLookupsBtn: document.getElementById('saveLookupsBtn'),
             clearLookupsBtn: document.getElementById('clearLookupsBtn'),
-            cancelLookupsBtn: document.getElementById('cancelLookupsBtn')
+            cancelLookupsBtn: document.getElementById('cancelLookupsBtn'),
+            // URL/Sharing elements
+            shareBtn: document.getElementById('shareBtn'),
+            exportBtn: document.getElementById('exportBtn'),
+            importBtn: document.getElementById('importBtn'),
+            importFile: document.getElementById('importFile'),
+            saveWorkspaceBtn: document.getElementById('saveWorkspaceBtn'),
+            loadWorkspaceBtn: document.getElementById('loadWorkspaceBtn')
         };
 
         // Initially disable process button
@@ -209,6 +229,12 @@ class TTPEditor {
         // Lookups modal
         this.setupLookupsModal();
 
+        // URL/Sharing functionality
+        this.setupURLSharing();
+        
+        // Export/Import functionality
+        this.setupExportImport();
+
         // Check initial state of auto-process checkbox
         this.isAutoProcessEnabled = this.elements.autoProcess.checked;
     }
@@ -248,6 +274,140 @@ class TTPEditor {
                 this.closeGlobalVarsModal();
             }
         });
+    }
+
+    setupURLSharing() {
+        // Share button
+        this.elements.shareBtn.addEventListener('click', async () => {
+            const success = await this.copyShareableURL();
+            if (success) {
+                this.updateStatus('Shareable URL copied to clipboard!');
+            } else {
+                this.updateStatus('Failed to copy URL to clipboard');
+            }
+        });
+
+        // Save workspace button
+        this.elements.saveWorkspaceBtn.addEventListener('click', () => {
+            const name = prompt('Enter workspace name:', 'workspace_' + Date.now());
+            if (name) {
+                this.saveWorkspace(name);
+                this.updateStatus(`Workspace '${name}' saved`);
+            }
+        });
+
+        // Load workspace button
+        this.elements.loadWorkspaceBtn.addEventListener('click', () => {
+            // Get list of saved workspaces
+            const workspaces = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('ttp_workspace_')) {
+                    const name = key.replace('ttp_workspace_', '');
+                    workspaces.push(name);
+                }
+            }
+
+            if (workspaces.length === 0) {
+                alert('No saved workspaces found');
+                return;
+            }
+
+            const name = prompt(`Enter workspace name to load:\n\nAvailable: ${workspaces.join(', ')}`);
+            if (name) {
+                this.loadWorkspace(name);
+                this.updateStatus(`Workspace '${name}' loaded`);
+            }
+        });
+    }
+
+    setupExportImport() {
+        // Export button
+        this.elements.exportBtn.addEventListener('click', () => {
+            this.exportConfiguration();
+        });
+
+        // Import button
+        this.elements.importBtn.addEventListener('click', () => {
+            this.elements.importFile.click();
+        });
+
+        // File input change handler
+        this.elements.importFile.addEventListener('change', (e) => {
+            this.importConfiguration(e.target.files[0]);
+        });
+    }
+
+    exportConfiguration() {
+        const config = {
+            data: this.dataEditor ? this.dataEditor.getValue() : '',
+            template: this.templateEditor ? this.templateEditor.getValue() : '',
+            vars: this.getCurrentVars(),
+            functions: this.functions,
+            lookups: this.lookupTables,
+            outputFormat: this.elements.outputFormat ? this.elements.outputFormat.value : 'json',
+            timestamp: new Date().toISOString(),
+            version: '1.0'
+        };
+
+        const configString = JSON.stringify(config, null, 2);
+        const blob = new Blob([configString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ttp-config-${new Date().toISOString().split('T')[0]}.ttp.export`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.updateStatus('Configuration exported successfully');
+        console.log('Configuration exported');
+    }
+
+    importConfiguration(file) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const config = JSON.parse(e.target.result);
+                
+                // Validate the configuration structure
+                if (this.validateImportedConfig(config)) {
+                    this.applyConfiguration(config);
+                    this.updateStatus('Configuration imported successfully');
+                    console.log('Configuration imported:', config);
+                } else {
+                    this.updateStatus('Invalid configuration file format');
+                    console.error('Invalid configuration file format');
+                }
+            } catch (error) {
+                this.updateStatus('Error reading configuration file: ' + error.message);
+                console.error('Error reading configuration file:', error);
+            }
+        };
+        
+        reader.readAsText(file);
+    }
+
+    validateImportedConfig(config) {
+        // Check if it's a valid TTP configuration
+        if (typeof config !== 'object' || config === null) {
+            return false;
+        }
+
+        // Check for required fields (at least one should be present)
+        const hasData = typeof config.data === 'string';
+        const hasTemplate = typeof config.template === 'string';
+        const hasVars = typeof config.vars === 'object' && config.vars !== null;
+        const hasFunctions = Array.isArray(config.functions);
+        const hasLookups = Array.isArray(config.lookups);
+        const hasOutputFormat = typeof config.outputFormat === 'string';
+
+        // At least one main field should be present
+        return hasData || hasTemplate || hasVars || hasFunctions || hasLookups || hasOutputFormat;
     }
 
     openGlobalVarsModal() {
@@ -1352,6 +1512,358 @@ timezone: UTC`;
     hideLoadingOverlay() {
         if (this.elements.loadingOverlay) {
             this.elements.loadingOverlay.style.display = 'none';
+        }
+    }
+
+    // URL Configuration Management
+    loadConfigurationFromURL() {
+        console.log('Loading configuration from URL...');
+        const urlParams = new URLSearchParams(window.location.search);
+        const config = {};
+        
+        console.log('URL parameters:', Array.from(urlParams.entries()));
+        
+        // Parse individual parameters
+        if (urlParams.has('data')) {
+            config.data = this.decodeBase64(urlParams.get('data'));
+            console.log('Found data parameter, length:', config.data.length);
+        }
+        
+        if (urlParams.has('template')) {
+            config.template = this.decodeBase64(urlParams.get('template'));
+            console.log('Found template parameter, length:', config.template.length);
+        }
+        
+        if (urlParams.has('vars')) {
+            try {
+                const varsParam = urlParams.get('vars');
+                config.vars = varsParam.startsWith('{') ? 
+                    JSON.parse(varsParam) : 
+                    JSON.parse(this.decodeBase64(varsParam));
+                console.log('Found vars parameter:', config.vars);
+            } catch (error) {
+                console.warn('Failed to parse vars parameter:', error);
+            }
+        }
+        
+        if (urlParams.has('functions')) {
+            try {
+                const functionsParam = urlParams.get('functions');
+                config.functions = functionsParam.startsWith('[') ? 
+                    JSON.parse(functionsParam) : 
+                    JSON.parse(this.decodeBase64(functionsParam));
+                console.log('Found functions parameter, count:', config.functions.length);
+            } catch (error) {
+                console.warn('Failed to parse functions parameter:', error);
+            }
+        }
+        
+        if (urlParams.has('lookups')) {
+            try {
+                const lookupsParam = urlParams.get('lookups');
+                config.lookups = lookupsParam.startsWith('[') ? 
+                    JSON.parse(lookupsParam) : 
+                    JSON.parse(this.decodeBase64(lookupsParam));
+                console.log('Found lookups parameter, count:', config.lookups.length);
+            } catch (error) {
+                console.warn('Failed to parse lookups parameter:', error);
+            }
+        }
+        
+        if (urlParams.has('format')) {
+            config.outputFormat = urlParams.get('format');
+            console.log('Found format parameter:', config.outputFormat);
+        }
+        
+        // Parse full configuration
+        if (urlParams.has('config')) {
+            try {
+                const configParam = this.decodeBase64(urlParams.get('config'));
+                const fullConfig = JSON.parse(configParam);
+                Object.assign(config, fullConfig);
+                console.log('Found config parameter, keys:', Object.keys(fullConfig));
+            } catch (error) {
+                console.warn('Failed to parse config parameter:', error);
+            }
+        }
+        
+        // Parse share ID and load from localStorage
+        if (urlParams.has('share')) {
+            try {
+                const shareId = urlParams.get('share');
+                const shareData = localStorage.getItem(`ttp_share_${shareId}`);
+                if (shareData) {
+                    const shareConfig = JSON.parse(shareData);
+                    Object.assign(config, shareConfig);
+                    console.log('Found share parameter, loaded config with keys:', Object.keys(shareConfig));
+                } else {
+                    console.warn('Share ID not found in localStorage:', shareId);
+                }
+            } catch (error) {
+                console.warn('Failed to parse share parameter:', error);
+            }
+        }
+        
+        // Load workspace from localStorage
+        if (urlParams.has('workspace')) {
+            this.workspaceName = urlParams.get('workspace');
+            this.loadWorkspace(this.workspaceName);
+        }
+        
+        // Store configuration for later application when editors are ready
+        if (Object.keys(config).length > 0) {
+            this.urlConfig = config;
+            console.log('URL configuration loaded, will apply when editors are ready:', config);
+        } else {
+            console.log('No URL configuration found');
+        }
+    }
+
+    applyConfiguration(config) {
+        console.log('Applying configuration:', config);
+        
+        try {
+            // Apply data
+            if (config.data && this.dataEditor) {
+                this.dataEditor.setValue(config.data);
+            }
+            
+            // Apply template
+            if (config.template && this.templateEditor) {
+                this.templateEditor.setValue(config.template);
+            }
+            
+            // Apply variables
+            if (config.vars) {
+                this.applyVariables(config.vars);
+            }
+            
+            // Apply functions
+            if (config.functions) {
+                this.applyFunctions(config.functions);
+            }
+            
+            // Apply lookups
+            if (config.lookups) {
+                this.applyLookups(config.lookups);
+            }
+            
+            // Apply output format
+            if (config.outputFormat && this.elements.outputFormat) {
+                this.elements.outputFormat.value = config.outputFormat;
+            }
+            
+            // Trigger auto-process if enabled
+            if (this.isAutoProcessEnabled) {
+                this.scheduleAutoProcess();
+            }
+            
+            console.log('Configuration applied successfully');
+        } catch (error) {
+            console.error('Error applying configuration:', error);
+            this.updateStatus('Error loading configuration from URL');
+        }
+    }
+
+    applyVariables(vars) {
+        if (typeof vars === 'object' && vars !== null) {
+            // Convert to JSON string for the vars editor
+            const varsString = JSON.stringify(vars, null, 2);
+            if (this.varsEditor) {
+                this.varsEditor.setValue(varsString);
+            }
+        }
+    }
+
+    applyFunctions(functions) {
+        if (Array.isArray(functions)) {
+            this.functions = functions.map((func, index) => ({
+                id: `func_${++this.functionCounter}`,
+                scope: func.scope || 'match',
+                name: func.name || '',
+                add_ttp: func.add_ttp || false,
+                code: func.code || ''
+            }));
+        }
+    }
+
+    applyLookups(lookups) {
+        if (Array.isArray(lookups)) {
+            this.lookupTables = lookups.map((lookup, index) => ({
+                id: `lookup_${++this.lookupCounter}`,
+                name: lookup.name || '',
+                load: lookup.load || 'python',
+                textData: lookup.textData || ''
+            }));
+        }
+    }
+
+    // Base64 utilities
+    encodeBase64(str) {
+        try {
+            return btoa(unescape(encodeURIComponent(str)));
+        } catch (error) {
+            console.error('Base64 encoding error:', error);
+            return '';
+        }
+    }
+
+    decodeBase64(str) {
+        try {
+            return decodeURIComponent(escape(atob(str)));
+        } catch (error) {
+            console.error('Base64 decoding error:', error);
+            return '';
+        }
+    }
+
+    // Workspace management
+    saveWorkspace(name = 'default') {
+        const workspace = {
+            data: this.dataEditor ? this.dataEditor.getValue() : '',
+            template: this.templateEditor ? this.templateEditor.getValue() : '',
+            vars: this.getCurrentVars(),
+            functions: this.functions,
+            lookups: this.lookupTables,
+            outputFormat: this.elements.outputFormat ? this.elements.outputFormat.value : 'json',
+            timestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem(`ttp_workspace_${name}`, JSON.stringify(workspace));
+        console.log(`Workspace '${name}' saved`);
+    }
+
+    loadWorkspace(name = 'default') {
+        const workspaceData = localStorage.getItem(`ttp_workspace_${name}`);
+        if (workspaceData) {
+            try {
+                const workspace = JSON.parse(workspaceData);
+                this.applyConfiguration(workspace);
+                console.log(`Workspace '${name}' loaded`);
+            } catch (error) {
+                console.error('Failed to load workspace:', error);
+            }
+        }
+    }
+
+    getCurrentVars() {
+        if (this.varsEditor) {
+            try {
+                return JSON.parse(this.varsEditor.getValue());
+            } catch (error) {
+                return {};
+            }
+        }
+        return {};
+    }
+
+    // Generate shareable URL
+    generateShareableURL() {
+        const config = {
+            data: this.dataEditor ? this.dataEditor.getValue() : '',
+            template: this.templateEditor ? this.templateEditor.getValue() : '',
+            vars: this.getCurrentVars(),
+            functions: this.functions,
+            lookups: this.lookupTables,
+            outputFormat: this.elements.outputFormat ? this.elements.outputFormat.value : 'json'
+        };
+        
+        const configString = JSON.stringify(config);
+        const configSize = configString.length;
+        
+        // For small configurations, use base64 in URL (works across devices)
+        if (configSize < 2000) { // 2KB limit
+            const encodedConfig = this.encodeBase64(configString);
+            const url = new URL(window.location);
+            url.searchParams.set('config', encodedConfig);
+            return url.toString();
+        }
+        
+        // For larger configurations, use localStorage with share ID
+        try {
+            const configId = 'share_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem(`ttp_share_${configId}`, configString);
+            
+            const url = new URL(window.location);
+            url.searchParams.set('share', configId);
+            return url.toString();
+        } catch (error) {
+            console.warn('localStorage not available, falling back to base64 method');
+            // Fallback to base64 even if it might be too large
+            const encodedConfig = this.encodeBase64(configString);
+            const url = new URL(window.location);
+            url.searchParams.set('config', encodedConfig);
+            return url.toString();
+        }
+    }
+
+    // Copy shareable URL to clipboard
+    async copyShareableURL() {
+        try {
+            const config = {
+                data: this.dataEditor ? this.dataEditor.getValue() : '',
+                template: this.templateEditor ? this.templateEditor.getValue() : '',
+                vars: this.getCurrentVars(),
+                functions: this.functions,
+                lookups: this.lookupTables,
+                outputFormat: this.elements.outputFormat ? this.elements.outputFormat.value : 'json'
+            };
+            
+            const configString = JSON.stringify(config);
+            const configSize = configString.length;
+            
+            // Check if configuration is too large for URL sharing
+            if (configSize > 2000) {
+                const useExport = confirm(
+                    `Configuration is too large for URL sharing (${Math.round(configSize/1024)}KB).\n\n` +
+                    'Would you like to export it as a file instead?\n\n' +
+                    'Click OK to export, or Cancel to try URL sharing anyway.'
+                );
+                
+                if (useExport) {
+                    this.exportConfiguration();
+                    return true;
+                }
+            }
+            
+            const url = this.generateShareableURL();
+            await navigator.clipboard.writeText(url);
+            console.log('Shareable URL copied to clipboard');
+            
+            // Clean up old share configurations (keep only last 10)
+            this.cleanupOldShares();
+            
+            return true;
+        } catch (error) {
+            console.error('Failed to copy URL to clipboard:', error);
+            return false;
+        }
+    }
+    
+    // Clean up old share configurations to prevent localStorage bloat
+    cleanupOldShares() {
+        const shareKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('ttp_share_')) {
+                shareKeys.push(key);
+            }
+        }
+        
+        // Sort by timestamp (newest first)
+        shareKeys.sort((a, b) => {
+            const aTime = a.split('_')[1];
+            const bTime = b.split('_')[1];
+            return parseInt(bTime) - parseInt(aTime);
+        });
+        
+        // Remove old shares (keep only last 10)
+        if (shareKeys.length > 10) {
+            const toRemove = shareKeys.slice(10);
+            toRemove.forEach(key => {
+                localStorage.removeItem(key);
+                console.log('Cleaned up old share:', key);
+            });
         }
     }
 }

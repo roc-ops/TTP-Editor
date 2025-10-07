@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TTP Template Processor</title>
+    <title>TTP Template Editor</title>
     <!-- CodeMirror 6 CSS is included in the modules -->
     <link rel="stylesheet" href="css/main.css">
 </head>
@@ -11,7 +11,7 @@
     <div class="container">
         <header class="header">
             <div class="header-left">
-                <h1>TTP Template Processor</h1>
+                <h1>TTP Template Editor</h1>
             </div>
             <div class="header-controls">
                 <button id="processBtn" class="btn btn-primary">Process Template</button>
@@ -26,6 +26,11 @@
                 <button id="globalVarsBtn" class="btn btn-secondary">Vars</button>
                 <button id="functionsBtn" class="btn btn-secondary">Functions</button>
                 <button id="lookupsBtn" class="btn btn-secondary">Lookups</button>
+                <button id="shareBtn" class="btn btn-secondary" style="display: none;">Share</button>
+                <button id="exportBtn" class="btn btn-secondary">Export</button>
+                <button id="importBtn" class="btn btn-secondary">Import</button>
+                <button id="saveWorkspaceBtn" class="btn btn-secondary">Save</button>
+                <button id="loadWorkspaceBtn" class="btn btn-secondary">Load</button>
                 <label class="auto-process-toggle">
                     <input type="checkbox" id="autoProcess" checked>
                     Auto Process
@@ -193,5 +198,8 @@
         console.log('After examples.js load, window.TTP_EXAMPLES:', window.TTP_EXAMPLES);
     </script>
     <script src="js/app-monaco.js"></script>
+    
+    <!-- Hidden file input for import -->
+    <input type="file" id="importFile" accept=".ttp.export,.json" style="display: none;">
 </body>
 </html>
