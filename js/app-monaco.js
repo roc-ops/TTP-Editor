@@ -110,7 +110,9 @@ class TTPEditor {
             importBtn: document.getElementById('importBtn'),
             importFile: document.getElementById('importFile'),
             saveWorkspaceBtn: document.getElementById('saveWorkspaceBtn'),
-            loadWorkspaceBtn: document.getElementById('loadWorkspaceBtn')
+            loadWorkspaceBtn: document.getElementById('loadWorkspaceBtn'),
+            // Documentation elements
+            docsBtn: document.getElementById('docsBtn')
         };
 
         // Initially disable process button
@@ -234,6 +236,9 @@ class TTPEditor {
         
         // Export/Import functionality
         this.setupExportImport();
+        
+        // Documentation functionality
+        this.setupDocumentation();
 
         // Check initial state of auto-process checkbox
         this.isAutoProcessEnabled = this.elements.autoProcess.checked;
@@ -336,6 +341,42 @@ class TTPEditor {
         this.elements.importFile.addEventListener('change', (e) => {
             this.importConfiguration(e.target.files[0]);
         });
+    }
+
+    setupDocumentation() {
+        // Update documentation button with TTP version when processor is ready
+        if (this.ttpProcessor) {
+            this.updateDocumentationVersion();
+        } else {
+            // Wait for processor to be initialized
+            const checkProcessor = () => {
+                if (this.ttpProcessor) {
+                    this.updateDocumentationVersion();
+                } else {
+                    setTimeout(checkProcessor, 100);
+                }
+            };
+            checkProcessor();
+        }
+    }
+
+    async updateDocumentationVersion() {
+        try {
+            // Get TTP version from the processor
+            const version = await this.ttpProcessor.getTTPVersion();
+            if (version && this.elements.docsBtn) {
+                this.elements.docsBtn.title = `TTP Documentation (v${version})`;
+                this.elements.docsBtn.href = `https://ttp.readthedocs.io/en/latest/`;
+                console.log(`TTP version detected: ${version}`);
+            }
+        } catch (error) {
+            console.warn('Could not get TTP version:', error);
+            // Fallback to default
+            if (this.elements.docsBtn) {
+                this.elements.docsBtn.title = 'TTP Documentation';
+                this.elements.docsBtn.href = 'https://ttp.readthedocs.io/en/latest/';
+            }
+        }
     }
 
     exportConfiguration() {

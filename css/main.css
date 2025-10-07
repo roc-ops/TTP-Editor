@@ -119,6 +119,30 @@ body {
     transform: none;
 }
 
+/* Documentation link styling */
+#docsBtn {
+    background: #059669;
+    color: white;
+    text-decoration: none;
+    border: 1px solid #059669;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-align: center;
+    min-width: 80px;
+}
+
+#docsBtn:hover {
+    background: #047857;
+    border-color: #047857;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
 /* Main content */
 .main-content {
     flex: 1;

@@ -615,6 +615,24 @@ def get_template_info(template_text):
     isReady() {
         return this.isInitialized;
     }
+
+    async getTTPVersion() {
+        try {
+            if (!this.pyodide) {
+                return null;
+            }
+            
+            // Get TTP version from Python
+            const version = this.pyodide.runPython(`
+import ttp
+print(ttp.__version__)
+`);
+            return version.trim();
+        } catch (error) {
+            console.warn('Could not get TTP version:', error);
+            return null;
+        }
+    }
 }
 
 // Export for use in other modules
