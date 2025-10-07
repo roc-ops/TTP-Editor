@@ -1,16 +1,21 @@
-# TTP Template Processor
+# TTP Template Editor
 
-A browser-based TTP (Template Text Parser) template processor that runs entirely client-side using Pyodide. This tool allows you to parse semi-structured text data using TTP templates without requiring a backend server.
+A powerful browser-based TTP (Template Text Parser) template editor that runs entirely client-side using Pyodide. This tool allows you to create, edit, and test TTP templates with advanced features like custom functions, lookup tables, and global variables.
 
 ## Features
 
 - **Client-side Processing**: Runs entirely in the browser using Pyodide (WebAssembly Python)
-- **Modern UI**: Clean, responsive interface with syntax highlighting
+- **Monaco Editor**: Professional code editing with syntax highlighting, folding, and search
 - **Multiple Output Formats**: JSON, YAML, and table formats
+- **Global Variables**: Define reusable variables for templates
+- **Custom Functions**: Create Python functions for advanced data processing
+- **Lookup Tables**: Define lookup tables for data enrichment
+- **Export/Import**: Save and share complete configurations as `.ttp.export` files
+- **Workspace Management**: Save and load multiple workspaces
+- **Real-time Processing**: Auto-process templates as you type
+- **Error Marking**: Visual error indicators in template editor
 - **Built-in Examples**: Pre-loaded TTP templates for common use cases
-- **Real-time Validation**: Input validation and error handling
-- **Export Results**: Download parsed results in various formats
-- **Keyboard Shortcuts**: Efficient workflow with keyboard shortcuts
+- **Resizable Panes**: Adjustable editor panes for optimal workflow
 
 ## Getting Started
 
@@ -35,10 +40,13 @@ A browser-based TTP (Template Text Parser) template processor that runs entirely
 
 1. **Load the Application**: Open the website and wait for the Python runtime to initialize
 2. **Input Data**: Paste your raw text data in the left panel
-3. **Create Template**: Write or paste your TTP template in the right panel
-4. **Process**: Click "Process Template" or use Ctrl/Cmd+Enter
-5. **View Results**: See parsed results in the bottom panel
-6. **Export**: Download results in JSON, YAML, or table format
+3. **Create Template**: Write or paste your TTP template in the middle panel
+4. **Configure Variables** (optional): Click "Vars" to define global variables
+5. **Add Custom Functions** (optional): Click "Functions" to create Python functions
+6. **Define Lookup Tables** (optional): Click "Lookups" to create data lookup tables
+7. **Process**: Click "Process Template" or enable auto-processing
+8. **View Results**: See parsed results in the right panel
+9. **Export**: Download results or save complete configuration as `.ttp.export` file
 
 ### Example Templates
 
@@ -50,6 +58,41 @@ The application includes several built-in examples:
 - **Network Device Inventory**: Extract device information
 
 Click "Load Example" to try these templates.
+
+## Advanced Features
+
+### Global Variables
+
+Define reusable variables that can be used in your templates:
+
+1. Click the "Vars" button
+2. Enter variables in JSON, YAML, or Python dictionary format
+3. Use variables in templates with `{{ variable_name }}`
+
+### Custom Functions
+
+Create Python functions for advanced data processing:
+
+1. Click the "Functions" button
+2. Define function scope (match, group, input, output, etc.)
+3. Write Python code for your function
+4. Use functions in templates with `{{ data | my_function }}`
+
+### Lookup Tables
+
+Define lookup tables for data enrichment:
+
+1. Click the "Lookups" button
+2. Create lookup tables in various formats (JSON, YAML, CSV, etc.)
+3. Use lookups in templates with `{{ data | lookup("table_name", "key") }}`
+
+### Export/Import
+
+Save and share complete configurations:
+
+- **Export**: Click "Export" to download `.ttp.export` file
+- **Import**: Click "Import" to load configuration from file
+- **Workspace**: Use "Save"/"Load" for local workspace management
 
 ### Keyboard Shortcuts
 
@@ -64,8 +107,10 @@ Click "Load Example" to try these templates.
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
 - **Python Runtime**: Pyodide v0.28.2 (WebAssembly)
 - **Text Processing**: TTP (Template Text Parser) library
-- **Code Editor**: CodeMirror for syntax highlighting
-- **Styling**: Modern CSS with gradient backgrounds and glassmorphism effects
+- **Code Editor**: Monaco Editor for professional code editing
+- **Styling**: Modern CSS with dark theme and resizable panes
+- **Storage**: LocalStorage for workspace persistence
+- **Sharing**: Export/Import system with `.ttp.export` files
 
 ### File Structure
 
@@ -75,7 +120,7 @@ TTP Editor/
 ├── css/
 │   └── main.css            # Application styles
 ├── js/
-│   ├── app.js              # Main application logic
+│   ├── app-monaco.js       # Main application logic with Monaco Editor
 │   ├── ttp-processor.js    # TTP processing wrapper
 │   └── examples.js         # Sample templates and data
 └── README.md               # This file
@@ -144,8 +189,10 @@ The application uses CSS custom properties for easy theming. Main colors and sty
 The modular architecture makes it easy to extend:
 
 - `TTPProcessor`: Handles Pyodide and TTP operations
-- `TTPEditor`: Manages UI and user interactions
+- `TTPEditor`: Manages UI, Monaco editors, and user interactions
 - `examples.js`: Contains sample data and templates
+- **Monaco Editor**: Professional code editing with syntax highlighting
+- **Export/Import System**: File-based configuration sharing
 
 ## Troubleshooting
 
@@ -181,11 +228,11 @@ This project is open source. Please check individual dependencies for their lice
 
 - Pyodide: Mozilla Public License 2.0
 - TTP: MIT License
-- CodeMirror: MIT License
+- Monaco Editor: MIT License
 
 ## Acknowledgments
 
 - Built on the excellent [Pyodide](https://pyodide.org/) project
 - Uses the powerful [TTP](https://ttp.readthedocs.io/) library by Denis Mulyalin
+- Code editing powered by [Monaco Editor](https://microsoft.github.io/monaco-editor/)
 - Inspired by the original [TextFSM Nornir](https://textfsm.nornir.tech/) tool
-- Code editing powered by [CodeMirror](https://codemirror.net/)
