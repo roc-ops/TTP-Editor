@@ -11,6 +11,7 @@ A powerful browser-based TTP (Template Text Parser) template editor that runs en
 - **Global Variables**: Define reusable variables for templates
 - **Custom Functions**: Create Python functions for advanced data processing
 - **Lookup Tables**: Define lookup tables for data enrichment
+- **Pyodide Packages**: Install additional Python packages from PyPI or custom URLs
 - **Export/Import**: Save and share complete configurations as `.ttp.export` files
 - **Workspace Management**: Save, load, and manage multiple workspaces
 - **Real-time Processing**: Auto-process templates as you type
@@ -49,9 +50,10 @@ A powerful browser-based TTP (Template Text Parser) template editor that runs en
 5. **Configure Variables** (optional): Click "Config" → "Variables" to define global variables
 6. **Add Custom Functions** (optional): Click "Config" → "Functions" to create Python functions
 7. **Define Lookup Tables** (optional): Click "Config" → "Lookups" to create data lookup tables
-8. **Process**: Click "Process" or enable auto-processing
-9. **View Results**: See parsed results in the right panel
-10. **Export**: Click "File" → "Export" to download results or save complete configuration
+8. **Install Packages** (optional): Click "Config" → "📦 Packages" to install additional Python packages
+9. **Process**: Click "Process" or enable auto-processing
+10. **View Results**: See parsed results in the right panel
+11. **Export**: Click "File" → "Export" to download results or save complete configuration
 
 ### Example Templates
 
@@ -106,6 +108,21 @@ Define lookup tables for data enrichment:
 2. Create lookup tables in various formats (JSON, YAML, CSV, etc.)
 3. Use lookups in templates with `{{ data | lookup("table_name", "key") }}`
 
+### Pyodide Packages
+
+Install additional Python packages to extend TTP functionality:
+
+1. Click "Config" → "📦 Packages"
+2. Add packages by name (PyPI) or URL (wheel files)
+3. Packages are loaded when processing starts and cached in browser
+4. Perfect for adding libraries like `requests`, `pandas`, `numpy`, etc.
+
+**Example Package Configuration:**
+- **Package Name**: `requests` (PyPI package)
+- **Source Type**: PyPI
+- **Package Name**: `https://example.com/custom-package.whl` (URL)
+- **Source Type**: URL
+
 ### Export/Import
 
 Save and share complete configurations:
@@ -121,7 +138,7 @@ The application features a modern, organized interface:
 
 - **Main Actions**: Process, Download, Output Format selector
 - **Actions Dropdown**: Clear All, Load Example
-- **Config Dropdown**: Inputs, Variables, Functions, Lookups
+- **Config Dropdown**: Inputs, Variables, Functions, Lookups, Packages
 - **File Dropdown**: Export, Import
 - **Workspace Dropdown**: Save, Load, Manage workspaces
 - **Auto-completion**: Context-aware suggestions for TTP functions and Python built-ins

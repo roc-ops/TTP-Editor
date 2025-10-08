@@ -31,6 +31,10 @@ class TTPEditor {
         // Inputs management
         this.inputs = [];
         this.inputCounter = 0;
+        
+        // Packages management
+        this.packages = [];
+        this.packageCounter = 0;
 
         // Lookups management
         this.lookupTables = [];
@@ -1635,6 +1639,13 @@ class TTPEditor {
             saveInputsBtn: document.getElementById('saveInputsBtn'),
             clearInputsBtn: document.getElementById('clearInputsBtn'),
             cancelInputsBtn: document.getElementById('cancelInputsBtn'),
+            packagesBtn: document.getElementById('packagesBtn'),
+            packagesModal: document.getElementById('packagesModal'),
+            addPackageBtn: document.getElementById('addPackageBtn'),
+            packagesList: document.getElementById('packagesList'),
+            savePackagesBtn: document.getElementById('savePackagesBtn'),
+            clearPackagesBtn: document.getElementById('clearPackagesBtn'),
+            cancelPackagesBtn: document.getElementById('cancelPackagesBtn'),
             globalVarsBtn: document.getElementById('globalVarsBtn'),
             globalVarsModal: document.getElementById('globalVarsModal'),
             varsFormat: document.getElementById('varsFormat'),
@@ -1816,6 +1827,11 @@ class TTPEditor {
             this.showInputsModal();
         });
         
+        // Packages button
+        this.elements.packagesBtn.addEventListener('click', () => {
+            this.showPackagesModal();
+        });
+        
         // Global vars button
         this.elements.globalVarsBtn.addEventListener('click', () => {
             this.openGlobalVarsModal();
@@ -1946,6 +1962,7 @@ class TTPEditor {
             functions: this.functions,
             lookups: this.lookupTables,
             inputs: this.inputs,
+            packages: this.packages,
             outputFormat: this.elements.outputFormat ? this.elements.outputFormat.value : 'json',
             timestamp: new Date().toISOString(),
             version: '1.0'
@@ -2022,10 +2039,11 @@ class TTPEditor {
         const hasFunctions = Array.isArray(config.functions);
         const hasLookups = Array.isArray(config.lookups);
         const hasInputs = Array.isArray(config.inputs);
+        const hasPackages = Array.isArray(config.packages);
         const hasOutputFormat = typeof config.outputFormat === 'string';
 
         // At least one main field should be present
-        return hasData || hasTemplate || hasVars || hasFunctions || hasLookups || hasInputs || hasOutputFormat;
+        return hasData || hasTemplate || hasVars || hasFunctions || hasLookups || hasInputs || hasPackages || hasOutputFormat;
     }
 
     openGlobalVarsModal() {
@@ -3756,6 +3774,206 @@ timezone: UTC`;
         });
     }
 
+    // Packages Modal Methods
+    showPackagesModal() {
+        const modal = document.getElementById('packagesModal');
+        this.populatePackagesList();
+        modal.classList.add('show');
+        this.setupPackagesModalEvents();
+    }
+
+    setupPackagesModalEvents() {
+        // Add package button
+        this.elements.addPackageBtn.addEventListener('click', () => {
+            this.addPackage();
+        });
+
+        // Save packages button
+        this.elements.savePackagesBtn.addEventListener('click', () => {
+            this.savePackages();
+        });
+
+        // Clear packages button
+        this.elements.clearPackagesBtn.addEventListener('click', () => {
+            this.clearPackages();
+        });
+
+        // Cancel button
+        this.elements.cancelPackagesBtn.addEventListener('click', () => {
+            this.closePackagesModal();
+        });
+
+        // Modal close button
+        const modal = document.getElementById('packagesModal');
+        const closeBtn = modal.querySelector('.modal-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.closePackagesModal();
+            });
+        }
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closePackagesModal();
+            }
+        });
+
+        // Escape key to close
+        document.addEventListener('keydown', this.handlePackagesModalEscape);
+    }
+
+    handlePackagesModalEscape = (e) => {
+        if (e.key === 'Escape') {
+            this.closePackagesModal();
+        }
+    }
+
+    closePackagesModal() {
+        const modal = document.getElementById('packagesModal');
+        modal.classList.remove('show');
+        this.removePackagesModalEvents();
+    }
+
+    removePackagesModalEvents() {
+        // Remove event listeners to prevent memory leaks
+        const addBtn = this.elements.addPackageBtn;
+        const saveBtn = this.elements.savePackagesBtn;
+        const clearBtn = this.elements.clearPackagesBtn;
+        const cancelBtn = this.elements.cancelPackagesBtn;
+        
+        if (addBtn) addBtn.replaceWith(addBtn.cloneNode(true));
+        if (saveBtn) saveBtn.replaceWith(saveBtn.cloneNode(true));
+        if (clearBtn) clearBtn.replaceWith(clearBtn.cloneNode(true));
+        if (cancelBtn) cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+        
+        document.removeEventListener('keydown', this.handlePackagesModalEscape);
+    }
+
+    populatePackagesList() {
+        const packagesList = this.elements.packagesList;
+        
+        if (this.packages.length === 0) {
+            packagesList.innerHTML = `
+                <div class="packages-empty">
+                    <h5>No packages configured</h5>
+                    <p>Add Python packages to extend TTP functionality</p>
+                </div>
+            `;
+            return;
+        }
+
+        packagesList.innerHTML = '';
+        
+        this.packages.forEach((pkg, index) => {
+            const packageItem = this.createPackageItem(pkg, index);
+            packagesList.appendChild(packageItem);
+        });
+    }
+
+    createPackageItem(pkg, index) {
+        const packageItem = document.createElement('div');
+        packageItem.className = 'package-item';
+        packageItem.innerHTML = `
+            <div class="package-item-header">
+                <div class="package-item-name">${pkg.name || 'Unnamed Package'}</div>
+                <div class="package-item-actions">
+                    <button class="btn btn-danger btn-sm" onclick="window.ttpEditor.removePackage(${index})">🗑️ Remove</button>
+                </div>
+            </div>
+            <div class="package-fields">
+                <div class="package-field">
+                    <label>Package Name/URL *</label>
+                    <input type="text" value="${pkg.name || ''}" onchange="window.ttpEditor.updatePackageField(${index}, 'name', this.value)" placeholder="e.g., requests or https://example.com/package.whl">
+                    <div class="package-field-help">PyPI package name or full URL to wheel file</div>
+                </div>
+                <div class="package-field">
+                    <label>Source Type</label>
+                    <select onchange="window.ttpEditor.updatePackageField(${index}, 'source', this.value)">
+                        <option value="pypi" ${pkg.source === 'pypi' ? 'selected' : ''}>PyPI</option>
+                        <option value="url" ${pkg.source === 'url' ? 'selected' : ''}>URL</option>
+                    </select>
+                    <div class="package-field-help">Package source type</div>
+                </div>
+            </div>
+        `;
+        return packageItem;
+    }
+
+    addPackage() {
+        const newPackage = {
+            name: '',
+            source: 'pypi'
+        };
+        
+        this.packages.push(newPackage);
+        this.packageCounter++;
+        this.populatePackagesList();
+    }
+
+    updatePackageField(index, field, value) {
+        if (this.packages[index]) {
+            this.packages[index][field] = value;
+        }
+    }
+
+    removePackage(index) {
+        if (this.packages[index]) {
+            this.packages.splice(index, 1);
+            this.populatePackagesList();
+        }
+    }
+
+    savePackages() {
+        // Validate packages
+        const validPackages = this.packages.filter(pkg => pkg.name && pkg.name.trim() !== '');
+        
+        if (validPackages.length === 0) {
+            this.showNotification('No valid packages to save', 'warning');
+            return;
+        }
+
+        // Check for duplicate names
+        const names = validPackages.map(pkg => pkg.name);
+        const duplicates = names.filter((name, index) => names.indexOf(name) !== index);
+        
+        if (duplicates.length > 0) {
+            this.showNotification(`Duplicate package names found: ${duplicates.join(', ')}`, 'error');
+            return;
+        }
+
+        // Save packages
+        this.packages = validPackages;
+        
+        // Update TTP processor with packages
+        this.updateTTPProcessorPackages();
+        
+        this.showNotification(`Saved ${validPackages.length} package(s)`, 'success');
+        this.closePackagesModal();
+    }
+
+    clearPackages() {
+        if (this.packages.length === 0) {
+            this.showNotification('No packages to clear', 'info');
+            return;
+        }
+
+        if (confirm('Are you sure you want to clear all packages?')) {
+            this.packages = [];
+            this.packageCounter = 0;
+            this.populatePackagesList();
+            this.updateTTPProcessorPackages();
+            this.showNotification('All packages cleared', 'success');
+        }
+    }
+
+    updateTTPProcessorPackages() {
+        if (!this.ttpProcessor) return;
+
+        // Update packages in TTP processor
+        this.ttpProcessor.setPackages(this.packages);
+    }
+
     hideLoadingOverlay() {
         if (this.elements.loadingOverlay) {
             this.elements.loadingOverlay.style.display = 'none';
@@ -3900,6 +4118,11 @@ timezone: UTC`;
                 this.applyInputs(config.inputs);
             }
             
+            // Apply packages
+            if (config.packages) {
+                this.applyPackages(config.packages);
+            }
+            
             // Apply output format
             if (config.outputFormat && this.elements.outputFormat) {
                 this.elements.outputFormat.value = config.outputFormat;
@@ -3969,6 +4192,21 @@ timezone: UTC`;
                         this.ttpProcessor.addInput(input.data, input.name, input.template_name, groups);
                     }
                 });
+            }
+        }
+    }
+
+    applyPackages(packages) {
+        if (Array.isArray(packages)) {
+            this.packages = packages.map((pkg, index) => ({
+                name: pkg.name || `package_${index + 1}`,
+                source: pkg.source || 'pypi'
+            }));
+            this.packageCounter = packages.length;
+            
+            // Update TTP processor
+            if (this.ttpProcessor) {
+                this.ttpProcessor.setPackages(this.packages);
             }
         }
     }

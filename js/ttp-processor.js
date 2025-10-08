@@ -9,6 +9,7 @@ class TTPProcessor {
         this.customFunctions = [];
         this.lookupTables = [];
         this.inputs = [];
+        this.packages = [];
         this.basePythonCode = null;
     }
 
@@ -43,6 +44,7 @@ from ttp import ttp
 import traceback
 import sys
 from io import StringIO
+import micropip
 
 # Custom functions start here
 ${customFunctionsCode}
@@ -54,7 +56,7 @@ def print_to_console(*args, **kwargs):
     js.console.log(' '.join(map(str, args)))
 sys.stdout.write = print_to_console
 
-def process_ttp_template(data_text, template_text, output_format='json', global_vars_text='', global_vars_format='json', custom_functions_text='', custom_functions_data=None, lookup_tables_data=None, inputs_data=None):
+def process_ttp_template(data_text, template_text, output_format='json', global_vars_text='', global_vars_format='json', custom_functions_text='', custom_functions_data=None, lookup_tables_data=None, inputs_data=None, packages_data=None):
     """
     Process TTP template with given data
 
@@ -155,6 +157,36 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
                     import traceback
                     print(f"TTP Debug: Traceback: {traceback.format_exc()}")
 
+        # Load additional packages
+        if packages_data:
+            for package_config in packages_data:
+                try:
+                    # Convert JavaScript object to Python dict properly
+                    if hasattr(package_config, 'to_py'):
+                        package_dict = package_config.to_py()
+                    else:
+                        package_dict = dict(package_config)
+                    
+                    package_name = package_dict.get('name')
+                    package_source = package_dict.get('source', 'pypi')
+                    
+                    print(f"TTP Debug: Loading package: {package_name} from {package_source}")
+                    
+                    if package_name and package_name.strip():
+                        if package_source == 'url':
+                            # Load from URL
+                            micropip.install(package_name)
+                            print(f"TTP Debug: Installed package from URL: {package_name}")
+                        else:
+                            # Load from PyPI
+                            micropip.install(package_name)
+                            print(f"TTP Debug: Installed package from PyPI: {package_name}")
+                    else:
+                        print(f"TTP Debug: Skipping empty package name")
+                except Exception as e:
+                    print(f"TTP Debug: Error loading package {package_name}: {str(e)}")
+                    import traceback
+                    print(f"TTP Debug: Traceback: {traceback.format_exc()}")
         
         # Add inputs - use configured inputs if available, otherwise fall back to single data input
         if inputs_data and len(inputs_data) > 0:
@@ -521,6 +553,13 @@ def get_template_info(template_text):
                 groups: input.groups
             }));
             this.pyodide.globals.set('inputs_data', plainInputsData);
+            
+            // Set packages data
+            const plainPackagesData = this.packages.map(pkg => ({
+                name: pkg.name,
+                source: pkg.source
+            }));
+            this.pyodide.globals.set('packages_data', plainPackagesData);
 
             // Set global variables if they exist
             if (this.globalVars) {
@@ -572,7 +611,7 @@ def get_template_info(template_text):
 
             // Call the Python function
             const result = await this.pyodide.runPythonAsync(`
-                process_ttp_template(data_input, template_input, format_input, global_vars_text, global_vars_format, '', custom_functions_data, lookup_tables_data, inputs_data)
+                process_ttp_template(data_input, template_input, format_input, global_vars_text, global_vars_format, '', custom_functions_data, lookup_tables_data, inputs_data, packages_data)
             `);
 
             // Wait a moment for any remaining stdout to be captured
@@ -697,6 +736,15 @@ print(ttp.__version__)
 
     getInputs() {
         return this.inputs;
+    }
+
+    // Package management methods
+    setPackages(packages) {
+        this.packages = packages;
+    }
+
+    getPackages() {
+        return this.packages;
     }
 }
 

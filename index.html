@@ -46,6 +46,7 @@
                         <button id="globalVarsBtn" class="dropdown-item">Variables</button>
                         <button id="functionsBtn" class="dropdown-item">Functions</button>
                         <button id="lookupsBtn" class="dropdown-item">Lookups</button>
+                        <button id="packagesBtn" class="dropdown-item">📦 Packages</button>
                     </div>
                 </div>
 
@@ -330,6 +331,45 @@
                         <button id="saveInputsBtn" class="btn btn-primary">Save Inputs</button>
                         <button id="clearInputsBtn" class="btn btn-secondary">Clear All</button>
                         <button id="cancelInputsBtn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Packages Configuration Modal -->
+        <div id="packagesModal" class="modal">
+            <div class="modal-content large-modal">
+                <div class="modal-header">
+                    <h3>📦 Pyodide Packages</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Install additional Python packages to extend TTP functionality. Packages are loaded from PyPI or custom URLs.</p>
+                    
+                    <div class="packages-container">
+                        <div class="packages-header">
+                            <h4>Installed Packages</h4>
+                            <button id="addPackageBtn" class="btn btn-primary">+ Add Package</button>
+                        </div>
+                        
+                        <div id="packagesList" class="packages-list">
+                            <!-- Packages will be populated here -->
+                        </div>
+                        
+                        <div class="packages-info">
+                            <h5>Package Sources</h5>
+                            <ul>
+                                <li><strong>PyPI:</strong> Enter package name (e.g., <code>requests</code>, <code>pandas</code>)</li>
+                                <li><strong>URL:</strong> Enter full URL to wheel file (e.g., <code>https://example.com/package.whl</code>)</li>
+                                <li><strong>Note:</strong> Packages are loaded when processing starts and cached in browser</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button id="savePackagesBtn" class="btn btn-primary">Save Packages</button>
+                        <button id="clearPackagesBtn" class="btn btn-secondary">Clear All</button>
+                        <button id="cancelPackagesBtn" class="btn btn-secondary">Cancel</button>
                     </div>
                 </div>
             </div>

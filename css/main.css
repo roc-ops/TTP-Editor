@@ -1173,6 +1173,175 @@ body {
     font-size: 12px;
 }
 
+/* Packages configuration styling */
+.packages-container {
+    margin: 20px 0;
+}
+
+.packages-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #4a5568;
+}
+
+.packages-header h4 {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.packages-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.package-item {
+    background: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+}
+
+.package-item:hover {
+    border-color: #4299e1;
+    background: #2d3748;
+}
+
+.package-item:last-child {
+    margin-bottom: 0;
+}
+
+.package-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.package-item-name {
+    font-weight: 600;
+    color: #e2e8f0;
+    font-size: 14px;
+}
+
+.package-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.package-item-actions .btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    min-width: auto;
+}
+
+.package-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.package-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.package-field label {
+    font-size: 12px;
+    color: #a0aec0;
+    font-weight: 500;
+}
+
+.package-field input,
+.package-field select {
+    padding: 8px 12px;
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 6px;
+    color: #e2e8f0;
+    font-size: 13px;
+    transition: border-color 0.2s;
+}
+
+.package-field input:focus,
+.package-field select:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.1);
+}
+
+.package-field.full-width {
+    grid-column: 1 / -1;
+}
+
+.package-field-help {
+    font-size: 11px;
+    color: #718096;
+    margin-top: 2px;
+}
+
+.packages-info {
+    background: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 20px;
+}
+
+.packages-info h5 {
+    margin: 0 0 12px 0;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.packages-info ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #a0aec0;
+}
+
+.packages-info li {
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.packages-info code {
+    background: #2d3748;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    color: #68d391;
+}
+
+/* Empty state for packages */
+.packages-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #a0aec0;
+}
+
+.packages-empty h5 {
+    margin: 0 0 8px 0;
+    color: #cbd5e0;
+    font-size: 14px;
+}
+
+.packages-empty p {
+    margin: 0;
+    font-size: 12px;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
