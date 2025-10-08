@@ -3919,7 +3919,7 @@ timezone: UTC`;
             <div class="package-fields">
                 <div class="package-field">
                     <label>Package Name/URL *</label>
-                    <input type="text" value="${pkg.name || ''}" onchange="window.safeUpdatePackageField(${index}, 'name', this.value)" oninput="window.safeUpdatePackageField(${index}, 'name', this.value); window.safeValidatePackageField(${index}, this.value, this)" placeholder="e.g., requests or https://example.com/package.whl" ${isInstalled ? 'readonly' : ''}>
+                    <input type="text" value="${pkg.name || ''}" onchange="window.safeUpdatePackageField(${index}, 'name', this.value)" oninput="window.safeUpdatePackageFieldDebounced(${index}, 'name', this.value); window.safeValidatePackageField(${index}, this.value, this)" placeholder="e.g., requests or https://example.com/package.whl" ${isInstalled ? 'readonly' : ''}>
                     <div class="package-field-help">PyPI package name or full URL to wheel file</div>
                     <div class="package-validation-message" id="validation-${index}" style="display: none;"></div>
                 </div>
@@ -3965,20 +3965,23 @@ timezone: UTC`;
         this.populatePackagesList();
     }
 
-    updatePackageField(index, field, value) {
+    updatePackageField(index, field, value, debounced = false) {
         // Ensure we have a valid instance and packages array
         if (!this || !this.packages || !this.packages[index]) {
             console.warn('updatePackageField: Invalid state', { index, field, value, hasThis: !!this, hasPackages: !!this?.packages, packagesLength: this?.packages?.length });
             return;
         }
         
-        console.log('updatePackageField:', { index, field, value, before: this.packages[index][field] });
+        console.log('updatePackageField:', { index, field, value, before: this.packages[index][field], debounced });
         this.packages[index][field] = value;
         console.log('updatePackageField: Updated', { index, field, value, after: this.packages[index][field] });
         
         // If updating the name field, use debounced install button update
-        if (field === 'name') {
+        if (field === 'name' && debounced) {
             this.debouncedUpdateInstallButton(index);
+        } else if (field === 'name' && !debounced) {
+            // Immediate update for onchange events
+            this.updateInstallButtonVisibility(index);
         }
     }
 
@@ -4745,9 +4748,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.safeUpdatePackageField = function(index, field, value) {
     console.log('safeUpdatePackageField called:', { index, field, value, hasEditor: !!window.ttpEditor });
     if (window.ttpEditor && window.ttpEditor.updatePackageField) {
-        window.ttpEditor.updatePackageField(index, field, value);
+        window.ttpEditor.updatePackageField(index, field, value, false); // immediate update
     } else {
         console.warn('safeUpdatePackageField: TTP Editor not available');
+    }
+};
+
+window.safeUpdatePackageFieldDebounced = function(index, field, value) {
+    console.log('safeUpdatePackageFieldDebounced called:', { index, field, value, hasEditor: !!window.ttpEditor });
+    if (window.ttpEditor && window.ttpEditor.updatePackageField) {
+        window.ttpEditor.updatePackageField(index, field, value, true); // debounced update
+    } else {
+        console.warn('safeUpdatePackageFieldDebounced: TTP Editor not available');
     }
 };
 
