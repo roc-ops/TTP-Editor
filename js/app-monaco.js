@@ -291,6 +291,223 @@ class TTPEditor {
                             documentation: 'Output attribute - specifies output format',
                             sortText: '04',
                             range: range
+                        },
+                        // Group functions as attributes
+                        {
+                            label: 'containsall',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'containsall="${1:value1,value2}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Contains all function - check if group contains all specified values',
+                            sortText: '05',
+                            range: range
+                        },
+                        {
+                            label: 'contains',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'contains="${1:value}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Contains function - check if group contains specified value',
+                            sortText: '06',
+                            range: range
+                        },
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'macro="${1:func_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Macro function - run macro function on group results',
+                            sortText: '07',
+                            range: range
+                        },
+                        {
+                            label: 'functions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'functions="${1:function1(\'attributes\') | function2(\'attributes\')}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Functions attribute - apply functions to group results',
+                            sortText: '08',
+                            range: range
+                        },
+                        {
+                            label: 'chain',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'chain="${1:variable_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Chain function - chain functions from variable',
+                            sortText: '09',
+                            range: range
+                        },
+                        {
+                            label: 'to_ip',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'to_ip="${1:true}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'To IP function - convert group result to IP address object',
+                            sortText: '10',
+                            range: range
+                        },
+                        {
+                            label: 'exclude',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'exclude="${1:pattern}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Exclude function - exclude group results matching pattern',
+                            sortText: '11',
+                            range: range
+                        },
+                        {
+                            label: 'excludeall',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'excludeall="${1:pattern1,pattern2}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Exclude all function - exclude all group results matching patterns',
+                            sortText: '12',
+                            range: range
+                        },
+                        {
+                            label: 'del',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'del="${1:true}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Delete function - delete group results',
+                            sortText: '13',
+                            range: range
+                        },
+                        {
+                            label: 'sformat',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'sformat="${1:format_string}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Sformat function - format group results using string format',
+                            sortText: '14',
+                            range: range
+                        },
+                        {
+                            label: 'itemize',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'itemize="${1:true}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Itemize function - convert group results to list of items',
+                            sortText: '15',
+                            range: range
+                        },
+                        {
+                            label: 'cerberus',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'cerberus="${1:schema_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Cerberus function - validate group results using Cerberus schema',
+                            sortText: '16',
+                            range: range
+                        },
+                        {
+                            label: 'void',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'void="${1:true}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Void function - void group results (always returns False)',
+                            sortText: '17',
+                            range: range
+                        },
+                        {
+                            label: 'str_to_unicode',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'str_to_unicode="${1:true}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Str to unicode function - convert group results to unicode string',
+                            sortText: '18',
+                            range: range
+                        },
+                        {
+                            label: 'equal',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'equal="${1:value}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Equal function - check if group result equals specified value',
+                            sortText: '19',
+                            range: range
+                        },
+                        {
+                            label: 'to_int',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'to_int="${1:true}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'To int function - convert group result to integer',
+                            sortText: '20',
+                            range: range
+                        },
+                        {
+                            label: 'contains_val',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'contains_val="${1:value}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Contains val function - check if group contains specific value',
+                            sortText: '21',
+                            range: range
+                        },
+                        {
+                            label: 'exclude_val',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'exclude_val="${1:value}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Exclude val function - exclude group results with specific value',
+                            sortText: '22',
+                            range: range
+                        },
+                        {
+                            label: 'record',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'record="${1:variable_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Record function - record group result in template variable',
+                            sortText: '23',
+                            range: range
+                        },
+                        {
+                            label: 'set',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'set="${1:value}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Set function - set group result to specific value',
+                            sortText: '24',
+                            range: range
+                        },
+                        {
+                            label: 'expand',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'expand="${1:true}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Expand function - expand group results',
+                            sortText: '25',
+                            range: range
+                        },
+                        {
+                            label: 'validate',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'validate="${1:schema_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Validate function - validate group results',
+                            sortText: '26',
+                            range: range
+                        },
+                        {
+                            label: 'lookup',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'lookup="${1:lookup_table_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Lookup function - lookup group result in lookup table',
+                            sortText: '27',
+                            range: range
+                        },
+                        {
+                            label: 'items2dict',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'items2dict="${1:true}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Items2dict function - convert group items to dictionary',
+                            sortText: '28',
+                            range: range
                         }
                     ] : []),
                     
@@ -521,6 +738,43 @@ class TTPEditor {
                             documentation: 'Filters attribute - regex patterns to filter files',
                             sortText: '05',
                             range: range
+                        },
+                        // Input functions as attributes
+                        {
+                            label: 'functions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'functions="${1:function1(\'attributes\') | function2(\'attributes\')}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Functions attribute - apply functions to input data',
+                            sortText: '06',
+                            range: range
+                        },
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'macro="${1:func_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Macro function - run macro on input data',
+                            sortText: '07',
+                            range: range
+                        },
+                        {
+                            label: 'extract_commands',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'extract_commands="${1:command1,command2}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Extract commands function - extract specific commands from input',
+                            sortText: '08',
+                            range: range
+                        },
+                        {
+                            label: 'test',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'test="${1:test_expression}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Test function - test input data processing',
+                            sortText: '09',
+                            range: range
                         }
                     ] : []),
                     
@@ -610,6 +864,88 @@ class TTPEditor {
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'Condition attribute - condition for output execution',
                             sortText: '05',
+                            range: range
+                        },
+                        // Output functions as attributes
+                        {
+                            label: 'is_equal',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'is_equal="${1:true}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Is equal function - checks if results equal to structure loaded from output tag text',
+                            sortText: '06',
+                            range: range
+                        },
+                        {
+                            label: 'set_data',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'set_data="${1:path=\'dot.separated.path\', value=\'data\'}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Set data function - insert arbitrary data to results at given path',
+                            sortText: '07',
+                            range: range
+                        },
+                        {
+                            label: 'dict_to_list',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'dict_to_list="${1:key_name=\'key\', path=\'dot.separated.path\'}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Dict to list function - transforms dictionary to list of dictionaries at given path',
+                            sortText: '08',
+                            range: range
+                        },
+                        {
+                            label: 'traverse',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'traverse="${1:path=\'dot.separated.path\'}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Traverse function - returns data at given path location of results tree',
+                            sortText: '09',
+                            range: range
+                        },
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'macro="${1:func_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Macro function - passes results through macro function',
+                            sortText: '10',
+                            range: range
+                        },
+                        {
+                            label: 'functions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'functions="${1:function1(\'attributes\') | function2(\'attributes\')}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Output functions - pipe separated list of functions to run results through',
+                            sortText: '11',
+                            range: range
+                        },
+                        {
+                            label: 'deepdiff',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'deepdiff="${1:path=\'dot.separated.path\'}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Deep diff function - function to compare result structures',
+                            sortText: '12',
+                            range: range
+                        },
+                        {
+                            label: 'validate',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'validate="${1:schema=\'schema_name\'}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Validate function - add Cerberus validation information to results without filtering them',
+                            sortText: '13',
+                            range: range
+                        },
+                        {
+                            label: 'validate_yangson',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'validate_yangson="${1:yang_mod_dir=\'./yang_modules/\', yang_mod_lib=\'./yang_modules/library/yang-library.json\'}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Validate Yangson function - uses YANG modules and yangson library to validate parsing results',
+                            sortText: '14',
                             range: range
                         }
                     ] : []),
@@ -718,6 +1054,25 @@ class TTPEditor {
                             documentation: 'Path char attribute - character for group name-path processing',
                             sortText: '03',
                             range: range
+                        },
+                        // Template functions as attributes (limited functions available)
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'macro="${1:func_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Macro function - run macro function on template',
+                            sortText: '04',
+                            range: range
+                        },
+                        {
+                            label: 'functions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'functions="${1:function1(\'attributes\') | function2(\'attributes\')}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Functions attribute - apply functions to template',
+                            sortText: '05',
+                            range: range
                         }
                     ] : []),
                     
@@ -749,6 +1104,25 @@ class TTPEditor {
                             documentation: 'URL attribute - specifies lookup data location',
                             sortText: '02',
                             range: range
+                        },
+                        // Lookup functions as attributes (limited functions available)
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'macro="${1:func_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Macro function - run macro function on lookup data',
+                            sortText: '03',
+                            range: range
+                        },
+                        {
+                            label: 'functions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'functions="${1:function1(\'attributes\') | function2(\'attributes\')}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Functions attribute - apply functions to lookup data',
+                            sortText: '04',
+                            range: range
                         }
                     ] : []),
                     
@@ -770,6 +1144,25 @@ class TTPEditor {
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'Name attribute - name for extended template',
                             sortText: '01',
+                            range: range
+                        },
+                        // Extend functions as attributes (limited functions available)
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'macro="${1:func_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Macro function - run macro function on extended template',
+                            sortText: '02',
+                            range: range
+                        },
+                        {
+                            label: 'functions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'functions="${1:function1(\'attributes\') | function2(\'attributes\')}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Functions attribute - apply functions to extended template',
+                            sortText: '03',
                             range: range
                         }
                     ] : []),
@@ -945,15 +1338,16 @@ class TTPEditor {
                     'extract_commands': 'Extract commands function - extract specific commands from input',
                     'test': 'Test function - test input data processing',
                     
-                    // Output Functions
-                    'is_equal': 'Is equal function - check if results are equal to value',
-                    'set_data': 'Set data function - set specific data for output',
-                    'dict_to_list': 'Dict to list function - convert dictionary to list',
-                    'traverse': 'Traverse function - traverse results structure',
-                    'output_functions': 'Output functions - apply output-specific functions',
-                    'deepdiff': 'Deep diff function - compare results with deep diff',
-                    'validate': 'Validate function - validate output results',
-                    'validate_yangson': 'Validate Yangson function - validate using Yangson schema',
+                    // Output Functions (as attributes and content)
+                    'is_equal': 'Is equal function - checks if results equal to structure loaded from output tag text',
+                    'set_data': 'Set data function - insert arbitrary data to results at given path',
+                    'dict_to_list': 'Dict to list function - transforms dictionary to list of dictionaries at given path',
+                    'traverse': 'Traverse function - returns data at given path location of results tree',
+                    'macro': 'Macro function - passes results through macro function',
+                    'functions': 'Output functions - pipe separated list of functions to run results through',
+                    'deepdiff': 'Deep diff function - function to compare result structures',
+                    'validate': 'Validate function - add Cerberus validation information to results without filtering them',
+                    'validate_yangson': 'Validate Yangson function - uses YANG modules and yangson library to validate parsing results',
                     
                     // Group Functions
                     'containsall': 'Check if group contains all specified values',
