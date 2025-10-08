@@ -40,7 +40,7 @@ class TTPProcessor {
         return `
 import json
 import yaml
-from ttp import ttp
+import ttp
 import traceback
 import sys
 from io import StringIO
@@ -93,7 +93,7 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
                 global_vars_dict = {}
 
         # Create TTP parser with global variables
-        parser = ttp()
+        parser = ttp.ttp()
 
         # Add custom functions from modal
         if custom_functions_data:
@@ -335,7 +335,7 @@ def validate_ttp_template(template_text):
     """
     try:
         # Try to create a parser with the template
-        parser = ttp(data="test", template=template_text)
+        parser = ttp.ttp(data="test", template=template_text)
 
         return {
             'valid': True,
