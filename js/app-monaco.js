@@ -219,31 +219,33 @@ class TTPEditor {
                 });
 
                 const suggestions = [
-                    // TTP template structure
-                    {
-                        label: 'template',
-                        kind: window.MonacoLanguages.CompletionItemKind.Keyword,
-                        insertText: '<template name="${1:template_name}">\n\t${2:template_content}\n</template>',
-                        insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        documentation: 'TTP template definition',
-                        range: range
-                    },
-                    {
-                        label: 'group',
-                        kind: window.MonacoLanguages.CompletionItemKind.Keyword,
-                        insertText: '<group name="${1:group_name}">\n\t${2:group_content}\n</group>',
-                        insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        documentation: 'TTP group definition',
-                        range: range
-                    },
-                    {
-                        label: 'macro',
-                        kind: window.MonacoLanguages.CompletionItemKind.Keyword,
-                        insertText: '<macro name="${1:macro_name}">\n\t${2:macro_content}\n</macro>',
-                        insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        documentation: 'TTP macro definition',
-                        range: range
-                    },
+                    // TTP template structure (only when not in an existing tag)
+                    ...(!isInGroupTag && !isInInputTag && !isInOutputTag && !isInTemplateTag && !isInLookupTag && !isInExtendTag ? [
+                        {
+                            label: 'template',
+                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            insertText: '<template name="${1:template_name}">\n\t${2:template_content}\n</template>',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'TTP template definition',
+                            range: range
+                        },
+                        {
+                            label: 'group',
+                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            insertText: '<group name="${1:group_name}">\n\t${2:group_content}\n</group>',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'TTP group definition',
+                            range: range
+                        },
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            insertText: '<macro name="${1:macro_name}">\n\t${2:macro_content}\n</macro>',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'TTP macro definition',
+                            range: range
+                        }
+                    ] : []),
                     
                     // Group attributes (only when in group tag)
                     ...(isInGroupTag ? [
