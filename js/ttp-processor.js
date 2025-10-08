@@ -8,6 +8,7 @@ class TTPProcessor {
         this.globalVars = null;
         this.customFunctions = [];
         this.lookupTables = [];
+        this.inputs = [];
         this.basePythonCode = null;
     }
 
@@ -52,7 +53,7 @@ def print_to_console(*args, **kwargs):
     js.console.log(' '.join(map(str, args)))
 sys.stdout.write = print_to_console
 
-def process_ttp_template(data_text, template_text, output_format='json', global_vars_text='', global_vars_format='json', custom_functions_text='', custom_functions_data=None, lookup_tables_data=None):
+def process_ttp_template(data_text, template_text, output_format='json', global_vars_text='', global_vars_format='json', custom_functions_text='', custom_functions_data=None, lookup_tables_data=None, inputs_data=None):
     """
     Process TTP template with given data
 
@@ -153,7 +154,42 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
                     print(f"TTP Debug: Traceback: {traceback.format_exc()}")
 
         
-        parser.add_input(data=data_text, template_name="_all_")
+        # Add inputs - use configured inputs if available, otherwise fall back to single data input
+        if inputs_data and len(inputs_data) > 0:
+            for input_config in inputs_data:
+                try:
+                    # Convert JavaScript object to Python dict properly
+                    if hasattr(input_config, 'to_py'):
+                        input_dict = input_config.to_py()
+                    else:
+                        input_dict = dict(input_config)
+                    
+                    input_data = input_dict.get('data', '')
+                    input_name = input_dict.get('input_name', 'Default_Input')
+                    template_name = input_dict.get('template_name', '_root_template_')
+                    groups = input_dict.get('groups')
+                    
+                    print(f"TTP Debug: Adding input '{input_name}' to template '{template_name}'")
+                    
+                    if input_data.strip():
+                        if groups:
+                            # Convert groups string to list
+                            groups_list = [g.strip() for g in groups.split(',') if g.strip()]
+                            parser.add_input(data=input_data, input_name=input_name, template_name=template_name, groups=groups_list)
+                        else:
+                            parser.add_input(data=input_data, input_name=input_name, template_name=template_name)
+                        print(f"TTP Debug: Added input '{input_name}' with {len(input_data)} characters")
+                    else:
+                        print(f"TTP Debug: Skipping empty input '{input_name}'")
+                except Exception as e:
+                    print(f"TTP Debug: Error adding input: {str(e)}")
+                    import traceback
+                    print(f"TTP Debug: Traceback: {traceback.format_exc()}")
+        else:
+            # Fallback to single data input
+            parser.add_input(data=data_text, template_name="_all_")
+            print(f"TTP Debug: Using fallback single data input with {len(data_text)} characters")
+        
         parser.add_vars(global_vars_dict)
 
         # Debug: Check if template has macros
@@ -474,6 +510,15 @@ def get_template_info(template_text):
             this.pyodide.globals.set('data_input', dataText);
             this.pyodide.globals.set('template_input', templateText);
             this.pyodide.globals.set('format_input', outputFormat);
+            
+            // Set inputs data
+            const plainInputsData = this.inputs.map(input => ({
+                data: input.data,
+                input_name: input.input_name,
+                template_name: input.template_name,
+                groups: input.groups
+            }));
+            this.pyodide.globals.set('inputs_data', plainInputsData);
 
             // Set global variables if they exist
             if (this.globalVars) {
@@ -525,7 +570,7 @@ def get_template_info(template_text):
 
             // Call the Python function
             const result = await this.pyodide.runPythonAsync(`
-                process_ttp_template(data_input, template_input, format_input, global_vars_text, global_vars_format, '', custom_functions_data, lookup_tables_data)
+                process_ttp_template(data_input, template_input, format_input, global_vars_text, global_vars_format, '', custom_functions_data, lookup_tables_data, inputs_data)
             `);
 
             // Wait a moment for any remaining stdout to be captured
@@ -632,6 +677,24 @@ print(ttp.__version__)
             console.warn('Could not get TTP version:', error);
             return null;
         }
+    }
+
+    // Input management methods
+    addInput(data, inputName = 'Default_Input', templateName = '_root_template_', groups = null) {
+        this.inputs.push({
+            data: data,
+            input_name: inputName,
+            template_name: templateName,
+            groups: groups
+        });
+    }
+
+    clearInputs() {
+        this.inputs = [];
+    }
+
+    getInputs() {
+        return this.inputs;
     }
 }
 

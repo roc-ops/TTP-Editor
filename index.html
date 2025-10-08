@@ -42,6 +42,7 @@
                         ⚙️ Config
                     </button>
                     <div class="dropdown-menu">
+                        <button id="inputsBtn" class="dropdown-item">📥 Inputs</button>
                         <button id="globalVarsBtn" class="dropdown-item">Variables</button>
                         <button id="functionsBtn" class="dropdown-item">Functions</button>
                         <button id="lookupsBtn" class="dropdown-item">Lookups</button>
@@ -299,6 +300,36 @@
                     <div class="modal-actions">
                         <button id="manageWorkspaceDelete" class="btn btn-danger" disabled>Delete Selected</button>
                         <button id="manageWorkspaceCancel" class="btn btn-secondary">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inputs Configuration Modal -->
+        <div id="inputsModal" class="modal">
+            <div class="modal-content large-modal">
+                <div class="modal-header">
+                    <h3>📥 Inputs Configuration</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Configure multiple named inputs for your TTP templates. Each input can be associated with specific templates and groups.</p>
+                    
+                    <div class="inputs-container">
+                        <div class="inputs-header">
+                            <h4>Inputs</h4>
+                            <button id="addInputBtn" class="btn btn-primary">+ Add Input</button>
+                        </div>
+                        
+                        <div id="inputsList" class="inputs-list">
+                            <!-- Inputs will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button id="saveInputsBtn" class="btn btn-primary">Save Inputs</button>
+                        <button id="clearInputsBtn" class="btn btn-secondary">Clear All</button>
+                        <button id="cancelInputsBtn" class="btn btn-secondary">Cancel</button>
                     </div>
                 </div>
             </div>

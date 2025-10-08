@@ -27,6 +27,10 @@ class TTPEditor {
         this.functions = [];
         this.functionCounter = 0;
         this.functionEditors = new Map();
+        
+        // Inputs management
+        this.inputs = [];
+        this.inputCounter = 0;
 
         // Lookups management
         this.lookupTables = [];
@@ -1615,7 +1619,14 @@ class TTPEditor {
             autoProcess: document.getElementById('autoProcess'),
             statusBar: document.querySelector('.status-bar'),
             loadingOverlay: document.querySelector('.loading-overlay'),
-            // Global vars modal elements
+            // Configuration modal elements
+            inputsBtn: document.getElementById('inputsBtn'),
+            inputsModal: document.getElementById('inputsModal'),
+            addInputBtn: document.getElementById('addInputBtn'),
+            inputsList: document.getElementById('inputsList'),
+            saveInputsBtn: document.getElementById('saveInputsBtn'),
+            clearInputsBtn: document.getElementById('clearInputsBtn'),
+            cancelInputsBtn: document.getElementById('cancelInputsBtn'),
             globalVarsBtn: document.getElementById('globalVarsBtn'),
             globalVarsModal: document.getElementById('globalVarsModal'),
             varsFormat: document.getElementById('varsFormat'),
@@ -1792,6 +1803,11 @@ class TTPEditor {
     }
 
     setupGlobalVarsModal() {
+        // Inputs button
+        this.elements.inputsBtn.addEventListener('click', () => {
+            this.showInputsModal();
+        });
+        
         // Global vars button
         this.elements.globalVarsBtn.addEventListener('click', () => {
             this.openGlobalVarsModal();
@@ -1921,6 +1937,7 @@ class TTPEditor {
             vars: this.getCurrentVars(),
             functions: this.functions,
             lookups: this.lookupTables,
+            inputs: this.inputs,
             outputFormat: this.elements.outputFormat ? this.elements.outputFormat.value : 'json',
             timestamp: new Date().toISOString(),
             version: '1.0'
@@ -1996,10 +2013,11 @@ class TTPEditor {
         const hasVars = typeof config.vars === 'object' && config.vars !== null;
         const hasFunctions = Array.isArray(config.functions);
         const hasLookups = Array.isArray(config.lookups);
+        const hasInputs = Array.isArray(config.inputs);
         const hasOutputFormat = typeof config.outputFormat === 'string';
 
         // At least one main field should be present
-        return hasData || hasTemplate || hasVars || hasFunctions || hasLookups || hasOutputFormat;
+        return hasData || hasTemplate || hasVars || hasFunctions || hasLookups || hasInputs || hasOutputFormat;
     }
 
     openGlobalVarsModal() {
@@ -3497,6 +3515,239 @@ timezone: UTC`;
         }
     }
 
+    // Inputs Modal Methods
+    showInputsModal() {
+        const modal = document.getElementById('inputsModal');
+        this.populateInputsList();
+        modal.classList.add('show');
+        this.setupInputsModalEvents();
+    }
+
+    setupInputsModalEvents() {
+        // Add input button
+        this.elements.addInputBtn.addEventListener('click', () => {
+            this.addInput();
+        });
+
+        // Save inputs button
+        this.elements.saveInputsBtn.addEventListener('click', () => {
+            this.saveInputs();
+        });
+
+        // Clear inputs button
+        this.elements.clearInputsBtn.addEventListener('click', () => {
+            this.clearInputs();
+        });
+
+        // Cancel button
+        this.elements.cancelInputsBtn.addEventListener('click', () => {
+            this.closeInputsModal();
+        });
+
+        // Modal close button
+        const modal = document.getElementById('inputsModal');
+        const closeBtn = modal.querySelector('.modal-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.closeInputsModal();
+            });
+        }
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeInputsModal();
+            }
+        });
+
+        // Escape key to close
+        document.addEventListener('keydown', this.handleInputsModalEscape);
+    }
+
+    handleInputsModalEscape = (e) => {
+        if (e.key === 'Escape') {
+            this.closeInputsModal();
+        }
+    }
+
+    closeInputsModal() {
+        const modal = document.getElementById('inputsModal');
+        modal.classList.remove('show');
+        this.removeInputsModalEvents();
+    }
+
+    removeInputsModalEvents() {
+        // Remove event listeners to prevent memory leaks
+        const addBtn = this.elements.addInputBtn;
+        const saveBtn = this.elements.saveInputsBtn;
+        const clearBtn = this.elements.clearInputsBtn;
+        const cancelBtn = this.elements.cancelInputsBtn;
+        
+        if (addBtn) addBtn.replaceWith(addBtn.cloneNode(true));
+        if (saveBtn) saveBtn.replaceWith(saveBtn.cloneNode(true));
+        if (clearBtn) clearBtn.replaceWith(clearBtn.cloneNode(true));
+        if (cancelBtn) cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+        
+        document.removeEventListener('keydown', this.handleInputsModalEscape);
+    }
+
+    populateInputsList() {
+        const inputsList = this.elements.inputsList;
+        
+        if (this.inputs.length === 0) {
+            inputsList.innerHTML = `
+                <div class="inputs-empty">
+                    <h5>No inputs configured</h5>
+                    <p>Add inputs to organize your data processing</p>
+                </div>
+            `;
+            return;
+        }
+
+        inputsList.innerHTML = '';
+        
+        this.inputs.forEach((input, index) => {
+            const inputItem = this.createInputItem(input, index);
+            inputsList.appendChild(inputItem);
+        });
+    }
+
+    createInputItem(input, index) {
+        const inputItem = document.createElement('div');
+        inputItem.className = 'input-item';
+        inputItem.innerHTML = `
+            <div class="input-item-header">
+                <div class="input-item-name">${input.name || 'Unnamed Input'}</div>
+                <div class="input-item-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="window.ttpEditor.duplicateInput(${index})">📋 Duplicate</button>
+                    <button class="btn btn-danger btn-sm" onclick="window.ttpEditor.removeInput(${index})">🗑️ Remove</button>
+                </div>
+            </div>
+            <div class="input-fields">
+                <div class="input-field">
+                    <label>Input Name *</label>
+                    <input type="text" value="${input.name || ''}" onchange="window.ttpEditor.updateInputField(${index}, 'name', this.value)" placeholder="e.g., router_config">
+                    <div class="input-field-help">Unique name for this input</div>
+                </div>
+                <div class="input-field">
+                    <label>Template Name</label>
+                    <input type="text" value="${input.template_name || ''}" onchange="window.ttpEditor.updateInputField(${index}, 'template_name', this.value)" placeholder="e.g., _root_template_">
+                    <div class="input-field-help">Template to use (default: _root_template_)</div>
+                </div>
+                <div class="input-field">
+                    <label>Groups</label>
+                    <input type="text" value="${input.groups || ''}" onchange="window.ttpEditor.updateInputField(${index}, 'groups', this.value)" placeholder="e.g., group1,group2">
+                    <div class="input-field-help">Comma-separated group names</div>
+                </div>
+                <div class="input-field full-width">
+                    <label>Data Content</label>
+                    <textarea onchange="window.ttpEditor.updateInputField(${index}, 'data', this.value)" placeholder="Paste your data here...">${input.data || ''}</textarea>
+                    <div class="input-field-help">The actual data content for this input</div>
+                </div>
+            </div>
+        `;
+        return inputItem;
+    }
+
+    addInput() {
+        const newInput = {
+            name: `input_${this.inputCounter + 1}`,
+            template_name: '_root_template_',
+            groups: '',
+            data: ''
+        };
+        
+        this.inputs.push(newInput);
+        this.inputCounter++;
+        this.populateInputsList();
+    }
+
+    updateInputField(index, field, value) {
+        if (this.inputs[index]) {
+            this.inputs[index][field] = value;
+        }
+    }
+
+    duplicateInput(index) {
+        if (this.inputs[index]) {
+            const original = this.inputs[index];
+            const duplicate = {
+                name: `${original.name}_copy`,
+                template_name: original.template_name,
+                groups: original.groups,
+                data: original.data
+            };
+            
+            this.inputs.splice(index + 1, 0, duplicate);
+            this.populateInputsList();
+        }
+    }
+
+    removeInput(index) {
+        if (this.inputs[index]) {
+            this.inputs.splice(index, 1);
+            this.populateInputsList();
+        }
+    }
+
+    saveInputs() {
+        // Validate inputs
+        const validInputs = this.inputs.filter(input => input.name && input.name.trim() !== '');
+        
+        if (validInputs.length === 0) {
+            this.showNotification('No valid inputs to save', 'warning');
+            return;
+        }
+
+        // Check for duplicate names
+        const names = validInputs.map(input => input.name);
+        const duplicates = names.filter((name, index) => names.indexOf(name) !== index);
+        
+        if (duplicates.length > 0) {
+            this.showNotification(`Duplicate input names found: ${duplicates.join(', ')}`, 'error');
+            return;
+        }
+
+        // Save inputs
+        this.inputs = validInputs;
+        
+        // Update TTP processor with inputs
+        this.updateTTPProcessorInputs();
+        
+        this.showNotification(`Saved ${validInputs.length} input(s)`, 'success');
+        this.closeInputsModal();
+    }
+
+    clearInputs() {
+        if (this.inputs.length === 0) {
+            this.showNotification('No inputs to clear', 'info');
+            return;
+        }
+
+        if (confirm('Are you sure you want to clear all inputs?')) {
+            this.inputs = [];
+            this.inputCounter = 0;
+            this.populateInputsList();
+            this.updateTTPProcessorInputs();
+            this.showNotification('All inputs cleared', 'success');
+        }
+    }
+
+    updateTTPProcessorInputs() {
+        if (!this.ttpProcessor) return;
+
+        // Clear existing inputs
+        this.ttpProcessor.clearInputs();
+        
+        // Add each input
+        this.inputs.forEach(input => {
+            if (input.name && input.data) {
+                const groups = input.groups ? input.groups.split(',').map(g => g.trim()).filter(g => g) : null;
+                this.ttpProcessor.addInput(input.data, input.name, input.template_name, groups);
+            }
+        });
+    }
+
     hideLoadingOverlay() {
         if (this.elements.loadingOverlay) {
             this.elements.loadingOverlay.style.display = 'none';
@@ -3636,6 +3887,11 @@ timezone: UTC`;
                 this.applyLookups(config.lookups);
             }
             
+            // Apply inputs
+            if (config.inputs) {
+                this.applyInputs(config.inputs);
+            }
+            
             // Apply output format
             if (config.outputFormat && this.elements.outputFormat) {
                 this.elements.outputFormat.value = config.outputFormat;
@@ -3683,6 +3939,29 @@ timezone: UTC`;
                 load: lookup.load || 'python',
                 textData: lookup.textData || ''
             }));
+        }
+    }
+
+    applyInputs(inputs) {
+        if (Array.isArray(inputs)) {
+            this.inputs = inputs.map((input, index) => ({
+                name: input.name || `input_${index + 1}`,
+                template_name: input.template_name || '_root_template_',
+                groups: input.groups || '',
+                data: input.data || ''
+            }));
+            this.inputCounter = inputs.length;
+            
+            // Update TTP processor
+            if (this.ttpProcessor) {
+                this.ttpProcessor.clearInputs();
+                this.inputs.forEach(input => {
+                    if (input.name && input.data) {
+                        const groups = input.groups ? input.groups.split(',').map(g => g.trim()).filter(g => g) : null;
+                        this.ttpProcessor.addInput(input.data, input.name, input.template_name, groups);
+                    }
+                });
+            }
         }
     }
 
