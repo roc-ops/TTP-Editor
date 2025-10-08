@@ -35,6 +35,7 @@ class TTPEditor {
         // Packages management
         this.packages = [];
         this.packageCounter = 0;
+        this.installButtonTimeouts = new Map(); // Track timeouts for each package
 
         // Lookups management
         this.lookupTables = [];
@@ -3975,10 +3976,27 @@ timezone: UTC`;
         this.packages[index][field] = value;
         console.log('updatePackageField: Updated', { index, field, value, after: this.packages[index][field] });
         
-        // If updating the name field, update the install button visibility without full refresh
+        // If updating the name field, use debounced install button update
         if (field === 'name') {
-            this.updateInstallButtonVisibility(index);
+            this.debouncedUpdateInstallButton(index);
         }
+    }
+
+    debouncedUpdateInstallButton(index) {
+        // Clear any existing timeout for this package
+        if (this.installButtonTimeouts.has(index)) {
+            clearTimeout(this.installButtonTimeouts.get(index));
+        }
+        
+        // Set a new timeout to update the install button after user stops typing
+        const timeoutId = window.setTimeout(() => {
+            console.log('debouncedUpdateInstallButton: Updating install button for package', index);
+            this.updateInstallButtonVisibility(index);
+            this.installButtonTimeouts.delete(index);
+        }, 150); // 150ms delay
+        
+        this.installButtonTimeouts.set(index, timeoutId);
+        console.log('debouncedUpdateInstallButton: Set timeout for package', index, 'delay: 150ms');
     }
 
     updateInstallButtonVisibility(index) {
@@ -4107,6 +4125,12 @@ timezone: UTC`;
 
     removePackage(index) {
         if (this.packages[index]) {
+            // Clear any pending timeout for this package
+            if (this.installButtonTimeouts.has(index)) {
+                clearTimeout(this.installButtonTimeouts.get(index));
+                this.installButtonTimeouts.delete(index);
+            }
+            
             this.packages.splice(index, 1);
             this.populatePackagesList();
         }
