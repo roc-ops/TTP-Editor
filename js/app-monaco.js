@@ -1446,6 +1446,14 @@ class TTPEditor {
     importConfiguration(file) {
         if (!file) return;
 
+        // Validate file extension
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.ttp.export') && !fileName.endsWith('.json')) {
+            this.updateStatus('Please select a .ttp.export or .json file');
+            console.error('Invalid file type. Expected .ttp.export or .json file');
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
