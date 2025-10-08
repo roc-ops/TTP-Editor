@@ -3832,6 +3832,24 @@ timezone: UTC`;
 
         // Escape key to close
         document.addEventListener('keydown', this.handlePackagesModalEscape);
+
+        // Delegated click for install buttons to survive re-renders
+        if (this.elements.packagesList && !this._packagesInstallDelegated) {
+            this.elements.packagesList.addEventListener('click', (e) => {
+                const btn = e.target.closest('button.install-btn');
+                if (btn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const packageItems = Array.from(this.elements.packagesList.querySelectorAll('.package-item'));
+                    const itemEl = e.target.closest('.package-item');
+                    const index = packageItems.indexOf(itemEl);
+                    if (index >= 0) {
+                        window.safeInstallPackage(index);
+                    }
+                }
+            });
+            this._packagesInstallDelegated = true;
+        }
     }
 
     handlePackagesModalEscape = (e) => {
