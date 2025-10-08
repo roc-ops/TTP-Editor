@@ -731,14 +731,21 @@ except Exception as e:
             
             while (attempts < maxAttempts) {
                 try {
-                    // Get TTP version from Python
+                    // Get TTP version from Python - return the value instead of printing
                     const version = this.pyodide.runPython(`
 import ttp
-print(ttp.__version__)
+ttp.__version__
 `);
-                    const cleanVersion = version.trim();
-                    if (cleanVersion && cleanVersion !== 'None') {
-                        return cleanVersion;
+                    
+                    console.log('TTP version attempt', attempts + 1, ':', typeof version, version);
+                    
+                    // Check if version is valid
+                    if (version && typeof version === 'string' && version.trim() !== 'None' && version.trim() !== '') {
+                        console.log('TTP version found:', version.trim());
+                        return version.trim();
+                    } else if (version && typeof version === 'string') {
+                        console.log('TTP version found (fallback):', version.trim());
+                        return version.trim();
                     }
                 } catch (error) {
                     if (attempts === maxAttempts - 1) {
