@@ -5,17 +5,21 @@ A powerful browser-based TTP (Template Text Parser) template editor that runs en
 ## Features
 
 - **Client-side Processing**: Runs entirely in the browser using Pyodide (WebAssembly Python)
-- **Monaco Editor**: Professional code editing with syntax highlighting, folding, and search
+- **Monaco Editor**: Professional code editing with syntax highlighting, auto-completion, and IntelliSense
 - **Multiple Output Formats**: JSON, YAML, and table formats
+- **Multiple Named Inputs**: Configure multiple inputs with template and group specifications
 - **Global Variables**: Define reusable variables for templates
 - **Custom Functions**: Create Python functions for advanced data processing
 - **Lookup Tables**: Define lookup tables for data enrichment
 - **Export/Import**: Save and share complete configurations as `.ttp.export` files
-- **Workspace Management**: Save and load multiple workspaces
+- **Workspace Management**: Save, load, and manage multiple workspaces
 - **Real-time Processing**: Auto-process templates as you type
 - **Error Marking**: Visual error indicators in template editor
 - **Built-in Examples**: Pre-loaded TTP templates for common use cases
 - **Resizable Panes**: Adjustable editor panes for optimal workflow
+- **Professional UI**: Modern dropdown menus, modals, and notifications
+- **TTP Syntax Highlighting**: Custom syntax highlighting for TTP templates
+- **Auto-completion**: Context-aware suggestions for TTP functions and Python built-ins
 
 ## Getting Started
 
@@ -41,12 +45,13 @@ A powerful browser-based TTP (Template Text Parser) template editor that runs en
 1. **Load the Application**: Open the website and wait for the Python runtime to initialize
 2. **Input Data**: Paste your raw text data in the left panel
 3. **Create Template**: Write or paste your TTP template in the middle panel
-4. **Configure Variables** (optional): Click "Vars" to define global variables
-5. **Add Custom Functions** (optional): Click "Functions" to create Python functions
-6. **Define Lookup Tables** (optional): Click "Lookups" to create data lookup tables
-7. **Process**: Click "Process Template" or enable auto-processing
-8. **View Results**: See parsed results in the right panel
-9. **Export**: Download results or save complete configuration as `.ttp.export` file
+4. **Configure Inputs** (optional): Click "Config" → "📥 Inputs" to manage multiple named inputs
+5. **Configure Variables** (optional): Click "Config" → "Variables" to define global variables
+6. **Add Custom Functions** (optional): Click "Config" → "Functions" to create Python functions
+7. **Define Lookup Tables** (optional): Click "Config" → "Lookups" to create data lookup tables
+8. **Process**: Click "Process" or enable auto-processing
+9. **View Results**: See parsed results in the right panel
+10. **Export**: Click "File" → "Export" to download results or save complete configuration
 
 ### Example Templates
 
@@ -61,11 +66,26 @@ Click "Load Example" to try these templates.
 
 ## Advanced Features
 
+### Multiple Named Inputs
+
+Configure multiple inputs with different templates and groups:
+
+1. Click "Config" → "📥 Inputs"
+2. Add inputs with unique names, template associations, and group filters
+3. Each input can target specific templates and process only certain groups
+4. Perfect for processing multiple data sources with different parsing rules
+
+**Example Input Configuration:**
+- **Input Name**: `router_config`
+- **Template**: `_root_template_`
+- **Groups**: `interfaces,routing`
+- **Data**: [Your router configuration data]
+
 ### Global Variables
 
 Define reusable variables that can be used in your templates:
 
-1. Click the "Vars" button
+1. Click "Config" → "Variables"
 2. Enter variables in JSON, YAML, or Python dictionary format
 3. Use variables in templates with `{{ variable_name }}`
 
@@ -73,7 +93,7 @@ Define reusable variables that can be used in your templates:
 
 Create Python functions for advanced data processing:
 
-1. Click the "Functions" button
+1. Click "Config" → "Functions"
 2. Define function scope (match, group, input, output, etc.)
 3. Write Python code for your function
 4. Use functions in templates with `{{ data | my_function }}`
@@ -82,7 +102,7 @@ Create Python functions for advanced data processing:
 
 Define lookup tables for data enrichment:
 
-1. Click the "Lookups" button
+1. Click "Config" → "Lookups"
 2. Create lookup tables in various formats (JSON, YAML, CSV, etc.)
 3. Use lookups in templates with `{{ data | lookup("table_name", "key") }}`
 
@@ -90,15 +110,31 @@ Define lookup tables for data enrichment:
 
 Save and share complete configurations:
 
-- **Export**: Click "Export" to download `.ttp.export` file
-- **Import**: Click "Import" to load configuration from file
-- **Workspace**: Use "Save"/"Load" for local workspace management
+- **Export**: Click "File" → "Export" to download `.ttp.export` file
+- **Import**: Click "File" → "Import" to load configuration from file
+- **Workspace**: Use "Workspace" → "Save"/"Load" for local workspace management
+- **Manage Workspaces**: Click "Workspace" → "Manage" to organize saved workspaces
+
+### User Interface
+
+The application features a modern, organized interface:
+
+- **Main Actions**: Process, Download, Output Format selector
+- **Actions Dropdown**: Clear All, Load Example
+- **Config Dropdown**: Inputs, Variables, Functions, Lookups
+- **File Dropdown**: Export, Import
+- **Workspace Dropdown**: Save, Load, Manage workspaces
+- **Auto-completion**: Context-aware suggestions for TTP functions and Python built-ins
+- **Syntax Highlighting**: Custom highlighting for TTP templates
+- **Professional Modals**: Beautiful dialogs for configuration and management
 
 ### Keyboard Shortcuts
 
 - `Ctrl/Cmd + Enter`: Process template
 - `Ctrl/Cmd + L`: Load example
 - `Ctrl/Cmd + K`: Clear all inputs
+- `Escape`: Close modals and dropdowns
+- `Enter`: Save in modals
 
 ## Technical Details
 
@@ -107,10 +143,11 @@ Save and share complete configurations:
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
 - **Python Runtime**: Pyodide v0.28.2 (WebAssembly)
 - **Text Processing**: TTP (Template Text Parser) library
-- **Code Editor**: Monaco Editor for professional code editing
-- **Styling**: Modern CSS with dark theme and resizable panes
-- **Storage**: LocalStorage for workspace persistence
+- **Code Editor**: Monaco Editor with custom TTP language support
+- **Styling**: Modern CSS with dark theme, dropdowns, and modals
+- **Storage**: LocalStorage for workspace persistence and URL sharing
 - **Sharing**: Export/Import system with `.ttp.export` files
+- **UI Components**: Professional modals, dropdowns, and notifications
 
 ### File Structure
 
@@ -188,11 +225,13 @@ The application uses CSS custom properties for easy theming. Main colors and sty
 
 The modular architecture makes it easy to extend:
 
-- `TTPProcessor`: Handles Pyodide and TTP operations
-- `TTPEditor`: Manages UI, Monaco editors, and user interactions
+- `TTPProcessor`: Handles Pyodide and TTP operations with multiple input support
+- `TTPEditor`: Manages UI, Monaco editors, modals, and user interactions
 - `examples.js`: Contains sample data and templates
-- **Monaco Editor**: Professional code editing with syntax highlighting
-- **Export/Import System**: File-based configuration sharing
+- **Monaco Editor**: Professional code editing with TTP syntax highlighting and auto-completion
+- **Export/Import System**: File-based configuration sharing with inputs support
+- **Modal System**: Reusable modal components for configuration dialogs
+- **Dropdown System**: Organized menu system for better UX
 
 ## Troubleshooting
 
@@ -200,18 +239,24 @@ The modular architecture makes it easy to extend:
 
 1. **Slow Initial Load**: Pyodide downloads ~10MB on first load. Subsequent loads are cached.
 
-2. **Memory Issues**: Large datasets may cause memory issues. Try processing smaller chunks.
+2. **Memory Issues**: Large datasets may cause memory issues. Try processing smaller chunks or use multiple inputs.
 
-3. **Template Errors**: Check template syntax. The application provides detailed error messages.
+3. **Template Errors**: Check template syntax. The application provides detailed error messages and visual indicators.
 
 4. **Browser Compatibility**: Ensure your browser supports WebAssembly.
+
+5. **Auto-completion Issues**: If suggestions don't appear, ensure you're typing in the template editor and check the context.
+
+6. **Input Configuration**: When using multiple inputs, ensure each has a unique name and valid data content.
 
 ### Performance Tips
 
 - Use specific regular expressions in templates
 - Avoid overly complex nested groups
-- Process data in reasonable chunks
+- Process data in reasonable chunks or use multiple inputs
 - Clear results between large processing runs
+- Use group filtering in inputs to process only relevant data
+- Take advantage of auto-completion for faster template writing
 
 ## Contributing
 
