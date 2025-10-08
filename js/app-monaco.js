@@ -135,7 +135,7 @@ class TTPEditor {
                     endColumn: word.endColumn
                 };
 
-                // Check if we're inside a group element
+                // Check context for different TTP elements
                 const textBefore = model.getValueInRange({
                     startLineNumber: 1,
                     startColumn: 1,
@@ -145,6 +145,16 @@ class TTPEditor {
                 
                 const isInGroup = /<group[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</group>');
                 const isInGroupTag = /<group[^>]*$/.test(textBefore);
+                const isInInput = /<input[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</input>');
+                const isInInputTag = /<input[^>]*$/.test(textBefore);
+                const isInOutput = /<output[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</output>');
+                const isInOutputTag = /<output[^>]*$/.test(textBefore);
+                const isInTemplate = /<template[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</template>');
+                const isInTemplateTag = /<template[^>]*$/.test(textBefore);
+                const isInLookup = /<lookup[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</lookup>');
+                const isInLookupTag = /<lookup[^>]*$/.test(textBefore);
+                const isInExtend = /<extend[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</extend>');
+                const isInExtendTag = /<extend[^>]*$/.test(textBefore);
 
                 const suggestions = [
                     // TTP template structure
@@ -394,6 +404,314 @@ class TTPEditor {
                         }
                     ] : []),
                     
+                    // Input attributes (only when in input tag)
+                    ...(isInInputTag ? [
+                        {
+                            label: 'name',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'name="${1:input_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Input name attribute - unique identifier for input',
+                            sortText: '00',
+                            range: range
+                        },
+                        {
+                            label: 'groups',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'groups="${1:group_names}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Groups attribute - specifies which groups should process this input',
+                            sortText: '01',
+                            range: range
+                        },
+                        {
+                            label: 'load',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'load="${1:text|yaml|python|json|xml}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Load attribute - specifies data format (text, yaml, python, json, xml)',
+                            sortText: '02',
+                            range: range
+                        },
+                        {
+                            label: 'url',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'url="${1:/path/to/data/}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'URL attribute - specifies data location',
+                            sortText: '03',
+                            range: range
+                        },
+                        {
+                            label: 'extensions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'extensions="${1:["txt", "conf"]}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Extensions attribute - file extensions to include',
+                            sortText: '04',
+                            range: range
+                        },
+                        {
+                            label: 'filters',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'filters="${1:["pattern1", "pattern2"]}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Filters attribute - regex patterns to filter files',
+                            sortText: '05',
+                            range: range
+                        }
+                    ] : []),
+                    
+                    // Input functions (only when in input content)
+                    ...(isInInput ? [
+                        {
+                            label: 'functions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Functions attribute - apply functions to input data',
+                            sortText: '06',
+                            range: range
+                        },
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Macro function - run macro on input data',
+                            sortText: '07',
+                            range: range
+                        },
+                        {
+                            label: 'extract_commands',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Extract commands function - extract specific commands from input',
+                            sortText: '08',
+                            range: range
+                        },
+                        {
+                            label: 'test',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Test function - test input data processing',
+                            sortText: '09',
+                            range: range
+                        }
+                    ] : []),
+                    
+                    // Output attributes (only when in output tag)
+                    ...(isInOutputTag ? [
+                        {
+                            label: 'name',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'name="${1:output_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Output name attribute - unique identifier for output',
+                            sortText: '00',
+                            range: range
+                        },
+                        {
+                            label: 'description',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'description="${1:output_description}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Description attribute - description of output purpose',
+                            sortText: '01',
+                            range: range
+                        },
+                        {
+                            label: 'load',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'load="${1:yaml|python|json}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Load attribute - specifies output configuration format',
+                            sortText: '02',
+                            range: range
+                        },
+                        {
+                            label: 'returner',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'returner="${1:self|file|terminal|syslog}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Returner attribute - specifies how to return results',
+                            sortText: '03',
+                            range: range
+                        },
+                        {
+                            label: 'format',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'format="${1:raw|yaml|json|pprint|table|csv|tabulate|jinja2|excel|n2g}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Format attribute - specifies output format',
+                            sortText: '04',
+                            range: range
+                        },
+                        {
+                            label: 'condition',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'condition="${1:condition_expression}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Condition attribute - condition for output execution',
+                            sortText: '05',
+                            range: range
+                        }
+                    ] : []),
+                    
+                    // Output functions (only when in output content)
+                    ...(isInOutput ? [
+                        {
+                            label: 'is_equal',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Is equal function - check if results are equal to value',
+                            sortText: '06',
+                            range: range
+                        },
+                        {
+                            label: 'set_data',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Set data function - set specific data for output',
+                            sortText: '07',
+                            range: range
+                        },
+                        {
+                            label: 'dict_to_list',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Dict to list function - convert dictionary to list',
+                            sortText: '08',
+                            range: range
+                        },
+                        {
+                            label: 'traverse',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Traverse function - traverse results structure',
+                            sortText: '09',
+                            range: range
+                        },
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Macro function - run macro on output results',
+                            sortText: '10',
+                            range: range
+                        },
+                        {
+                            label: 'output_functions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Output functions - apply output-specific functions',
+                            sortText: '11',
+                            range: range
+                        },
+                        {
+                            label: 'deepdiff',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Deep diff function - compare results with deep diff',
+                            sortText: '12',
+                            range: range
+                        },
+                        {
+                            label: 'validate',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Validate function - validate output results',
+                            sortText: '13',
+                            range: range
+                        },
+                        {
+                            label: 'validate_yangson',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Validate Yangson function - validate using Yangson schema',
+                            sortText: '14',
+                            range: range
+                        }
+                    ] : []),
+                    
+                    // Template attributes (only when in template tag)
+                    ...(isInTemplateTag ? [
+                        {
+                            label: 'name',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'name="${1:template_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Template name attribute - unique identifier for template',
+                            sortText: '00',
+                            range: range
+                        },
+                        {
+                            label: 'base_path',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'base_path="${1:/path/to/data/}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Base path attribute - base OS path to data location',
+                            sortText: '01',
+                            range: range
+                        },
+                        {
+                            label: 'results',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'results="${1:per_template|per_input}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Results attribute - results grouping method (per_template or per_input)',
+                            sortText: '02',
+                            range: range
+                        },
+                        {
+                            label: 'pathchar',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'pathchar="${1:.}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Path char attribute - character for group name-path processing',
+                            sortText: '03',
+                            range: range
+                        }
+                    ] : []),
+                    
+                    // Lookup attributes (only when in lookup tag)
+                    ...(isInLookupTag ? [
+                        {
+                            label: 'name',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'name="${1:lookup_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Lookup name attribute - unique identifier for lookup table',
+                            sortText: '00',
+                            range: range
+                        },
+                        {
+                            label: 'load',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'load="${1:text|yaml|python|json|xml}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Load attribute - specifies lookup data format',
+                            sortText: '01',
+                            range: range
+                        },
+                        {
+                            label: 'url',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'url="${1:/path/to/lookup/data}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'URL attribute - specifies lookup data location',
+                            sortText: '02',
+                            range: range
+                        }
+                    ] : []),
+                    
+                    // Extend attributes (only when in extend tag)
+                    ...(isInExtendTag ? [
+                        {
+                            label: 'template',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'template="${1:template_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Template attribute - name of template to extend',
+                            sortText: '00',
+                            range: range
+                        },
+                        {
+                            label: 'name',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'name="${1:extend_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Name attribute - name for extended template',
+                            sortText: '01',
+                            range: range
+                        }
+                    ] : []),
+                    
                     // TTP Action Functions (highest priority)
                     { label: 'append', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Append provided string to the end of match result', sortText: '01', range: range },
                     { label: 'chain', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Add functions from chain variable', sortText: '02', range: range },
@@ -553,6 +871,22 @@ class TTPEditor {
                 
                 // TTP function documentation
                 const ttpFunctions = {
+                    // Input Functions
+                    'functions': 'Functions attribute - apply functions to input data',
+                    'macro': 'Macro function - run macro on input data',
+                    'extract_commands': 'Extract commands function - extract specific commands from input',
+                    'test': 'Test function - test input data processing',
+                    
+                    // Output Functions
+                    'is_equal': 'Is equal function - check if results are equal to value',
+                    'set_data': 'Set data function - set specific data for output',
+                    'dict_to_list': 'Dict to list function - convert dictionary to list',
+                    'traverse': 'Traverse function - traverse results structure',
+                    'output_functions': 'Output functions - apply output-specific functions',
+                    'deepdiff': 'Deep diff function - compare results with deep diff',
+                    'validate': 'Validate function - validate output results',
+                    'validate_yangson': 'Validate Yangson function - validate using Yangson schema',
+                    
                     // Group Functions
                     'containsall': 'Check if group contains all specified values',
                     'contains': 'Check if group contains specified value',
