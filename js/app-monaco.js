@@ -4021,7 +4021,7 @@ timezone: UTC`;
                 message = `⚠️ "${value}" may contain C extensions. Verify it's pure Python.`;
                 isError = true;
             } else {
-                message = `✅ Package name looks good`;
+                message = `✅ Package name looks good - will be installed when you process a template`;
             }
         }
 
@@ -4074,7 +4074,7 @@ timezone: UTC`;
         // Update TTP processor with packages
         this.updateTTPProcessorPackages();
         
-        this.showNotification(`Saved ${validPackages.length} package(s)`, 'success');
+        this.showNotification(`✅ Saved ${validPackages.length} package(s) - they will be installed when you process a template`, 'success');
         this.closePackagesModal();
     }
 
