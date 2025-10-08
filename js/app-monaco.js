@@ -3912,7 +3912,7 @@ timezone: UTC`;
                     ${pkg.status === 'installing' ? '<span class="loading-spinner">⏳</span>' : ''}
                 </div>
                 <div class="package-item-actions">
-                    ${canInstall ? `<button class="btn btn-primary btn-sm install-btn" onclick="window.safeInstallPackage(${index})">📦 Install</button>` : ''}
+                    ${canInstall ? `<button class="btn btn-primary btn-sm install-btn" type="button" onclick="event.preventDefault(); event.stopPropagation(); window.safeInstallPackage(${index})">📦 Install</button>` : ''}
                     <button class="btn btn-danger btn-sm" onclick="window.safeRemovePackage(${index})">🗑️ Remove</button>
                 </div>
             </div>
@@ -4020,8 +4020,13 @@ timezone: UTC`;
         if (canInstall) {
             const installBtn = document.createElement('button');
             installBtn.className = 'btn btn-primary btn-sm install-btn';
+            installBtn.type = 'button';
             installBtn.innerHTML = '📦 Install';
-            installBtn.onclick = () => window.safeInstallPackage(index);
+            installBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.safeInstallPackage(index);
+            });
             
             // Insert before the remove button
             const removeBtn = actionsContainer.querySelector('button[onclick*="safeRemovePackage"]');
