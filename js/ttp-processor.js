@@ -791,6 +791,37 @@ ttp.__version__
     getPackages() {
         return this.packages;
     }
+
+    async installPackage(packageName, source = 'pypi') {
+        try {
+            if (!this.pyodide || !this.isInitialized) {
+                throw new Error('TTP Processor not initialized');
+            }
+
+            console.log(`Installing package: ${packageName} from ${source}`);
+
+            // Install the package using micropip
+            if (source === 'url') {
+                await this.pyodide.runPythonAsync(`
+import micropip
+await micropip.install('${packageName}')
+print(f"Installed package from URL: ${packageName}")
+`);
+            } else {
+                await this.pyodide.runPythonAsync(`
+import micropip
+await micropip.install('${packageName}')
+print(f"Installed package from PyPI: ${packageName}")
+`);
+            }
+
+            console.log(`Successfully installed package: ${packageName}`);
+            return true;
+        } catch (error) {
+            console.error(`Failed to install package ${packageName}:`, error);
+            throw error;
+        }
+    }
 }
 
 // Export for use in other modules

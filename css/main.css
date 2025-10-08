@@ -1460,6 +1460,61 @@ body {
     border-left: 3px solid #4299e1;
 }
 
+/* Package status styling */
+.package-item.package-pending {
+    border-left: 3px solid #a0aec0;
+}
+
+.package-item.package-installing {
+    border-left: 3px solid #4299e1;
+    background: rgba(66, 153, 225, 0.05);
+}
+
+.package-item.package-success {
+    border-left: 3px solid #68d391;
+    background: rgba(104, 211, 145, 0.05);
+}
+
+.package-item.package-error {
+    border-left: 3px solid #f56565;
+    background: rgba(245, 101, 101, 0.05);
+}
+
+.package-item-header .package-item-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.package-error {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 8px;
+    font-size: 12px;
+    border: 1px solid rgba(245, 101, 101, 0.3);
+}
+
+.package-success {
+    background: rgba(104, 211, 145, 0.1);
+    color: #68d391;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 8px;
+    font-size: 12px;
+    border: 1px solid rgba(104, 211, 145, 0.3);
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

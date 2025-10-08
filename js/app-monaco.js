@@ -3886,31 +3886,42 @@ timezone: UTC`;
     }
 
     createPackageItem(pkg, index) {
+        const statusIcon = this.getStatusIcon(pkg.status);
+        const statusClass = this.getStatusClass(pkg.status);
+        const isInstalled = pkg.status === 'success';
+        const canInstall = pkg.name && pkg.name.trim() && (pkg.status === 'pending' || pkg.status === 'error');
+        
         const packageItem = document.createElement('div');
-        packageItem.className = 'package-item';
+        packageItem.className = `package-item ${statusClass}`;
         packageItem.innerHTML = `
             <div class="package-item-header">
-                <div class="package-item-name">${pkg.name || 'Unnamed Package'}</div>
+                <div class="package-item-name">
+                    ${statusIcon} ${pkg.name || 'Unnamed Package'}
+                    ${pkg.status === 'installing' ? '<span class="loading-spinner">⏳</span>' : ''}
+                </div>
                 <div class="package-item-actions">
+                    ${canInstall ? `<button class="btn btn-primary btn-sm" onclick="window.safeInstallPackage(${index})">📦 Install</button>` : ''}
                     <button class="btn btn-danger btn-sm" onclick="window.safeRemovePackage(${index})">🗑️ Remove</button>
                 </div>
             </div>
             <div class="package-fields">
                 <div class="package-field">
                     <label>Package Name/URL *</label>
-                    <input type="text" value="${pkg.name || ''}" onchange="window.safeUpdatePackageField(${index}, 'name', this.value)" oninput="window.safeUpdatePackageField(${index}, 'name', this.value); window.safeValidatePackageField(${index}, this.value, this)" placeholder="e.g., requests or https://example.com/package.whl">
+                    <input type="text" value="${pkg.name || ''}" onchange="window.safeUpdatePackageField(${index}, 'name', this.value)" oninput="window.safeUpdatePackageField(${index}, 'name', this.value); window.safeValidatePackageField(${index}, this.value, this)" placeholder="e.g., requests or https://example.com/package.whl" ${isInstalled ? 'readonly' : ''}>
                     <div class="package-field-help">PyPI package name or full URL to wheel file</div>
                     <div class="package-validation-message" id="validation-${index}" style="display: none;"></div>
                 </div>
                 <div class="package-field">
                     <label>Source Type</label>
-                    <select onchange="window.safeUpdatePackageField(${index}, 'source', this.value); const input = document.querySelector('input[onchange*=\"safeUpdatePackageField(${index}\"]'); if(input) window.safeValidatePackageField(${index}, input.value, input);">
+                    <select onchange="window.safeUpdatePackageField(${index}, 'source', this.value); const input = document.querySelector('input[onchange*=\"safeUpdatePackageField(${index}\"]'); if(input) window.safeValidatePackageField(${index}, input.value, input);" ${isInstalled ? 'disabled' : ''}>
                         <option value="pypi" ${pkg.source === 'pypi' ? 'selected' : ''}>PyPI</option>
                         <option value="url" ${pkg.source === 'url' ? 'selected' : ''}>URL</option>
                     </select>
                     <div class="package-field-help">Package source type</div>
                 </div>
             </div>
+            ${pkg.status === 'error' && pkg.error ? `<div class="package-error">❌ ${pkg.error}</div>` : ''}
+            ${pkg.status === 'success' ? `<div class="package-success">✅ Successfully installed and ready to use</div>` : ''}
         `;
         
         // Add direct event listeners for debugging
@@ -3930,7 +3941,9 @@ timezone: UTC`;
     addPackage() {
         const newPackage = {
             name: '',
-            source: 'pypi'
+            source: 'pypi',
+            status: 'pending', // pending, installing, success, error
+            error: null
         };
         
         console.log('addPackage: Adding new package', newPackage);
@@ -4044,37 +4057,31 @@ timezone: UTC`;
     }
 
     savePackages() {
-        // Validate packages
-        const validPackages = this.packages.filter(pkg => pkg.name && pkg.name.trim() !== '');
+        // Only save successfully installed packages
+        const installedPackages = this.packages.filter(pkg => pkg.status === 'success');
+        const pendingPackages = this.packages.filter(pkg => pkg.status === 'pending' || pkg.status === 'installing');
+        const errorPackages = this.packages.filter(pkg => pkg.status === 'error');
         
-        if (validPackages.length === 0) {
-            this.showNotification('No valid packages to save', 'warning');
+        if (installedPackages.length === 0) {
+            this.showNotification('No successfully installed packages to save', 'warning');
             return;
         }
 
-        // Check for duplicate names
-        const names = validPackages.map(pkg => pkg.name);
-        const duplicates = names.filter((name, index) => names.indexOf(name) !== index);
-        
-        if (duplicates.length > 0) {
-            this.showNotification(`Duplicate package names found: ${duplicates.join(', ')}`, 'error');
-            return;
+        if (pendingPackages.length > 0) {
+            this.showNotification(`⚠️ ${pendingPackages.length} package(s) not installed yet. Install them first or they will be removed.`, 'warning');
         }
 
-        // Validate package compatibility
-        const validationResults = this.validatePackages(validPackages);
-        if (!validationResults.isValid) {
-            this.showNotification(validationResults.message, 'error');
-            return;
+        if (errorPackages.length > 0) {
+            this.showNotification(`⚠️ ${errorPackages.length} package(s) failed to install and will be removed.`, 'warning');
         }
 
-        // Save packages
-        this.packages = validPackages;
+        // Save only successfully installed packages
+        this.packages = installedPackages;
         
         // Update TTP processor with packages
         this.updateTTPProcessorPackages();
         
-        this.showNotification(`✅ Saved ${validPackages.length} package(s) - they will be installed when you process a template`, 'success');
+        this.showNotification(`✅ Saved ${installedPackages.length} successfully installed package(s)`, 'success');
         this.closePackagesModal();
     }
 
@@ -4166,6 +4173,65 @@ timezone: UTC`;
 
         // Update packages in TTP processor
         this.ttpProcessor.setPackages(this.packages);
+    }
+
+    getStatusIcon(status) {
+        switch (status) {
+            case 'pending': return '⏳';
+            case 'installing': return '📦';
+            case 'success': return '✅';
+            case 'error': return '❌';
+            default: return '⏳';
+        }
+    }
+
+    getStatusClass(status) {
+        switch (status) {
+            case 'pending': return 'package-pending';
+            case 'installing': return 'package-installing';
+            case 'success': return 'package-success';
+            case 'error': return 'package-error';
+            default: return 'package-pending';
+        }
+    }
+
+    async installPackage(index) {
+        if (!this.packages[index] || !this.ttpProcessor) return;
+
+        const pkg = this.packages[index];
+        if (!pkg.name || !pkg.name.trim()) {
+            this.showNotification('Please enter a package name first', 'warning');
+            return;
+        }
+
+        // Set status to installing
+        pkg.status = 'installing';
+        pkg.error = null;
+        this.populatePackagesList();
+
+        try {
+            console.log(`Installing package: ${pkg.name} from ${pkg.source}`);
+            
+            // Install the package using TTP processor
+            const success = await this.ttpProcessor.installPackage(pkg.name, pkg.source);
+            
+            if (success) {
+                pkg.status = 'success';
+                pkg.error = null;
+                this.showNotification(`✅ Successfully installed ${pkg.name}`, 'success');
+            } else {
+                pkg.status = 'error';
+                pkg.error = 'Installation failed';
+                this.showNotification(`❌ Failed to install ${pkg.name}`, 'error');
+            }
+        } catch (error) {
+            console.error('Package installation error:', error);
+            pkg.status = 'error';
+            pkg.error = error.message || 'Installation failed';
+            this.showNotification(`❌ Error installing ${pkg.name}: ${pkg.error}`, 'error');
+        }
+
+        this.populatePackagesList();
     }
 
     hideLoadingOverlay() {
@@ -4620,5 +4686,14 @@ window.safeRemovePackage = function(index) {
         window.ttpEditor.removePackage(index);
     } else {
         console.warn('safeRemovePackage: TTP Editor not available');
+    }
+};
+
+window.safeInstallPackage = function(index) {
+    console.log('safeInstallPackage called:', { index, hasEditor: !!window.ttpEditor });
+    if (window.ttpEditor && window.ttpEditor.installPackage) {
+        window.ttpEditor.installPackage(index);
+    } else {
+        console.warn('safeInstallPackage: TTP Editor not available');
     }
 };
