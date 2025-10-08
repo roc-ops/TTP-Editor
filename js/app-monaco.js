@@ -1691,7 +1691,10 @@ class TTPEditor {
             fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
             // Disable auto-closing for XML tags to prevent conflicts with snippets
             autoClosingBrackets: 'never',
-            autoClosingQuotes: 'languageDefined'
+            autoClosingQuotes: 'languageDefined',
+            // Additional settings to prevent auto-closing
+            autoClosingOvertype: 'never',
+            autoSurround: 'never'
         });
 
         // Hide original textarea
