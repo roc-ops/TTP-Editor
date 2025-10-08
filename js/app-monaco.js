@@ -3954,13 +3954,21 @@ timezone: UTC`;
 
     validatePackageField(index, value, inputElement) {
         // Ensure we have a valid instance and packages array
-        if (!this || !this.packages || !this.packages[index]) return;
+        if (!this || !this.packages || !this.packages[index]) {
+            console.warn('validatePackageField: Invalid state', { index, value, hasThis: !!this, hasPackages: !!this?.packages });
+            return;
+        }
 
         const packageName = value.toLowerCase().trim();
         const source = this.packages[index].source;
         const validationElement = document.getElementById(`validation-${index}`);
         
-        if (!validationElement) return;
+        console.log('validatePackageField:', { index, value, packageName, source, hasValidationElement: !!validationElement });
+        
+        if (!validationElement) {
+            console.warn('validatePackageField: Validation element not found', `validation-${index}`);
+            return;
+        }
 
         // Clear previous validation
         validationElement.style.display = 'none';
@@ -4018,10 +4026,13 @@ timezone: UTC`;
         }
 
         if (message) {
+            console.log('validatePackageField: Showing message', { message, isError });
             validationElement.textContent = message;
             validationElement.className = `package-validation-message ${isError ? 'error' : 'success'}`;
             validationElement.style.display = 'block';
             inputElement.style.borderColor = isError ? '#f56565' : '#68d391';
+        } else {
+            console.log('validatePackageField: No message to show');
         }
     }
 
