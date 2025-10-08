@@ -3975,10 +3975,49 @@ timezone: UTC`;
         this.packages[index][field] = value;
         console.log('updatePackageField: Updated', { index, field, value, after: this.packages[index][field] });
         
-        // If updating the name field, refresh the package list to show/hide install button
+        // If updating the name field, update the install button visibility without full refresh
         if (field === 'name') {
-            console.log('updatePackageField: Refreshing package list due to name change');
-            this.populatePackagesList();
+            this.updateInstallButtonVisibility(index);
+        }
+    }
+
+    updateInstallButtonVisibility(index) {
+        const pkg = this.packages[index];
+        if (!pkg) return;
+
+        // Find the package item in the DOM
+        const packageItems = document.querySelectorAll('.package-item');
+        const packageItem = packageItems[index];
+        if (!packageItem) return;
+
+        // Find the install button container
+        const actionsContainer = packageItem.querySelector('.package-item-actions');
+        if (!actionsContainer) return;
+
+        // Determine if install button should be shown
+        const canInstall = pkg.name && pkg.name.trim() && (pkg.status === 'pending' || pkg.status === 'error');
+        
+        console.log('updateInstallButtonVisibility:', { index, pkgName: pkg.name, pkgStatus: pkg.status, canInstall });
+
+        // Update the install button
+        const existingInstallBtn = actionsContainer.querySelector('button[onclick*="safeInstallPackage"]');
+        if (canInstall && !existingInstallBtn) {
+            // Add install button
+            const installBtn = document.createElement('button');
+            installBtn.className = 'btn btn-primary btn-sm';
+            installBtn.innerHTML = '📦 Install';
+            installBtn.onclick = () => window.safeInstallPackage(index);
+            
+            // Insert before the remove button
+            const removeBtn = actionsContainer.querySelector('button[onclick*="safeRemovePackage"]');
+            if (removeBtn) {
+                actionsContainer.insertBefore(installBtn, removeBtn);
+            } else {
+                actionsContainer.appendChild(installBtn);
+            }
+        } else if (!canInstall && existingInstallBtn) {
+            // Remove install button
+            existingInstallBtn.remove();
         }
     }
 
