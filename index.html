@@ -212,7 +212,45 @@
     </script>
     <script src="js/app-monaco.js"></script>
     
-    <!-- Hidden file input for import -->
-    <input type="file" id="importFile" style="display: none;">
+        <!-- Hidden file input for import -->
+        <input type="file" id="importFile" style="display: none;">
+
+        <!-- Save Workspace Modal -->
+        <div id="saveWorkspaceModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>💾 Save Workspace</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Enter a name for your workspace:</p>
+                    <input type="text" id="workspaceNameInput" placeholder="Enter workspace name..." autofocus>
+                    <div class="modal-actions">
+                        <button id="saveWorkspaceConfirm" class="btn btn-primary">Save</button>
+                        <button id="saveWorkspaceCancel" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Load Workspace Modal -->
+        <div id="loadWorkspaceModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📂 Load Workspace</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Select a workspace to load:</p>
+                    <div id="workspaceList" class="workspace-list">
+                        <!-- Workspaces will be populated here -->
+                    </div>
+                    <div class="modal-actions">
+                        <button id="loadWorkspaceConfirm" class="btn btn-primary" disabled>Load</button>
+                        <button id="loadWorkspaceCancel" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 </body>
 </html>

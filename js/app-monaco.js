@@ -1841,48 +1841,12 @@ class TTPEditor {
 
         // Save workspace button
         this.elements.saveWorkspaceBtn.addEventListener('click', () => {
-            const name = prompt('Enter workspace name:', 'workspace_' + Date.now());
-            if (name) {
-                try {
-                    this.saveWorkspace(name);
-                    this.updateStatus(`✅ Workspace '${name}' saved`);
-                    this.showNotification(`Workspace '${name}' saved successfully!`, 'success');
-                } catch (error) {
-                    this.updateStatus(`❌ Failed to save workspace: ${error.message}`);
-                    this.showNotification(`Failed to save workspace: ${error.message}`, 'error');
-                }
-            }
+            this.showSaveWorkspaceModal();
         });
 
         // Load workspace button
         this.elements.loadWorkspaceBtn.addEventListener('click', () => {
-            // Get list of saved workspaces
-            const workspaces = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('ttp_workspace_')) {
-                    const name = key.replace('ttp_workspace_', '');
-                    workspaces.push(name);
-                }
-            }
-
-            if (workspaces.length === 0) {
-                this.updateStatus('❌ No saved workspaces found');
-                this.showNotification('No saved workspaces found', 'warning');
-                return;
-            }
-
-            const name = prompt(`Enter workspace name to load:\n\nAvailable: ${workspaces.join(', ')}`);
-            if (name) {
-                try {
-                    this.loadWorkspace(name);
-                    this.updateStatus(`✅ Workspace '${name}' loaded`);
-                    this.showNotification(`Workspace '${name}' loaded successfully!`, 'success');
-                } catch (error) {
-                    this.updateStatus(`❌ Failed to load workspace: ${error.message}`);
-                    this.showNotification(`Failed to load workspace: ${error.message}`, 'error');
-                }
-            }
+            this.showLoadWorkspaceModal();
         });
     }
 
@@ -3164,6 +3128,193 @@ timezone: UTC`;
             info: 'ℹ️'
         };
         return icons[type] || icons.info;
+    }
+
+    // Modal functionality
+    showSaveWorkspaceModal() {
+        const modal = document.getElementById('saveWorkspaceModal');
+        const input = document.getElementById('workspaceNameInput');
+        
+        // Set default name
+        input.value = 'workspace_' + Date.now();
+        
+        // Show modal
+        modal.classList.add('show');
+        input.focus();
+        input.select();
+        
+        // Add event listeners
+        this.setupSaveWorkspaceModalEvents();
+    }
+
+    setupSaveWorkspaceModalEvents() {
+        const modal = document.getElementById('saveWorkspaceModal');
+        const input = document.getElementById('workspaceNameInput');
+        const saveBtn = document.getElementById('saveWorkspaceConfirm');
+        const cancelBtn = document.getElementById('saveWorkspaceCancel');
+        const closeBtn = modal.querySelector('.modal-close');
+
+        const closeModal = () => {
+            modal.classList.remove('show');
+            this.removeSaveWorkspaceModalEvents();
+        };
+
+        const handleSave = () => {
+            const name = input.value.trim();
+            if (name) {
+                try {
+                    this.saveWorkspace(name);
+                    this.updateStatus(`✅ Workspace '${name}' saved`);
+                    this.showNotification(`Workspace '${name}' saved successfully!`, 'success');
+                    closeModal();
+                } catch (error) {
+                    this.updateStatus(`❌ Failed to save workspace: ${error.message}`);
+                    this.showNotification(`Failed to save workspace: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        // Event listeners
+        saveBtn.addEventListener('click', handleSave);
+        cancelBtn.addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', closeModal);
+        
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Enter key to save
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleSave();
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Store references for cleanup
+        this.saveModalEvents = { saveBtn, cancelBtn, closeBtn, modal, input };
+    }
+
+    removeSaveWorkspaceModalEvents() {
+        if (this.saveModalEvents) {
+            const { saveBtn, cancelBtn, closeBtn, modal, input } = this.saveModalEvents;
+            saveBtn.removeEventListener('click', this.saveModalEvents.handleSave);
+            cancelBtn.removeEventListener('click', this.saveModalEvents.handleClose);
+            closeBtn.removeEventListener('click', this.saveModalEvents.handleClose);
+            modal.removeEventListener('click', this.saveModalEvents.handleBackdrop);
+            input.removeEventListener('keydown', this.saveModalEvents.handleKeydown);
+            delete this.saveModalEvents;
+        }
+    }
+
+    showLoadWorkspaceModal() {
+        const modal = document.getElementById('loadWorkspaceModal');
+        const workspaceList = document.getElementById('workspaceList');
+        
+        // Get list of saved workspaces
+        const workspaces = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('ttp_workspace_')) {
+                const name = key.replace('ttp_workspace_', '');
+                const data = JSON.parse(localStorage.getItem(key));
+                workspaces.push({
+                    name: name,
+                    timestamp: data.timestamp || 'Unknown date'
+                });
+            }
+        }
+
+        if (workspaces.length === 0) {
+            this.updateStatus('❌ No saved workspaces found');
+            this.showNotification('No saved workspaces found', 'warning');
+            return;
+        }
+
+        // Sort by timestamp (newest first)
+        workspaces.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        // Populate workspace list
+        workspaceList.innerHTML = '';
+        workspaces.forEach(workspace => {
+            const item = document.createElement('div');
+            item.className = 'workspace-item';
+            item.innerHTML = `
+                <div class="workspace-name">${workspace.name}</div>
+                <div class="workspace-date">${new Date(workspace.timestamp).toLocaleDateString()}</div>
+            `;
+            item.addEventListener('click', () => {
+                // Remove previous selection
+                workspaceList.querySelectorAll('.workspace-item').forEach(i => i.classList.remove('selected'));
+                // Add selection to clicked item
+                item.classList.add('selected');
+                // Enable load button
+                document.getElementById('loadWorkspaceConfirm').disabled = false;
+            });
+            workspaceList.appendChild(item);
+        });
+
+        // Show modal
+        modal.classList.add('show');
+        
+        // Add event listeners
+        this.setupLoadWorkspaceModalEvents();
+    }
+
+    setupLoadWorkspaceModalEvents() {
+        const modal = document.getElementById('loadWorkspaceModal');
+        const loadBtn = document.getElementById('loadWorkspaceConfirm');
+        const cancelBtn = document.getElementById('loadWorkspaceCancel');
+        const closeBtn = modal.querySelector('.modal-close');
+
+        const closeModal = () => {
+            modal.classList.remove('show');
+            this.removeLoadWorkspaceModalEvents();
+        };
+
+        const handleLoad = () => {
+            const selectedItem = modal.querySelector('.workspace-item.selected');
+            if (selectedItem) {
+                const name = selectedItem.querySelector('.workspace-name').textContent;
+                try {
+                    this.loadWorkspace(name);
+                    this.updateStatus(`✅ Workspace '${name}' loaded`);
+                    this.showNotification(`Workspace '${name}' loaded successfully!`, 'success');
+                    closeModal();
+                } catch (error) {
+                    this.updateStatus(`❌ Failed to load workspace: ${error.message}`);
+                    this.showNotification(`Failed to load workspace: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        // Event listeners
+        loadBtn.addEventListener('click', handleLoad);
+        cancelBtn.addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', closeModal);
+        
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Escape key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
+        });
+
+        // Store references for cleanup
+        this.loadModalEvents = { loadBtn, cancelBtn, closeBtn, modal, handleLoad, handleClose: closeModal };
+    }
+
+    removeLoadWorkspaceModalEvents() {
+        if (this.loadModalEvents) {
+            const { loadBtn, cancelBtn, closeBtn, modal } = this.loadModalEvents;
+            loadBtn.removeEventListener('click', this.loadModalEvents.handleLoad);
+            cancelBtn.removeEventListener('click', this.loadModalEvents.handleClose);
+            closeBtn.removeEventListener('click', this.loadModalEvents.handleClose);
+            modal.removeEventListener('click', this.loadModalEvents.handleBackdrop);
+            delete this.loadModalEvents;
+        }
     }
 
     hideLoadingOverlay() {
