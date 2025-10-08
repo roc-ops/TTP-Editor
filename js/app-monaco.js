@@ -3863,6 +3863,9 @@ timezone: UTC`;
     populatePackagesList() {
         const packagesList = this.elements.packagesList;
         
+        console.log('populatePackagesList: Packages array has', this.packages.length, 'items');
+        console.log('populatePackagesList: Packages data:', this.packages);
+        
         if (this.packages.length === 0) {
             packagesList.innerHTML = `
                 <div class="packages-empty">
@@ -3876,6 +3879,7 @@ timezone: UTC`;
         packagesList.innerHTML = '';
         
         this.packages.forEach((pkg, index) => {
+            console.log('populatePackagesList: Creating item for package', index, pkg);
             const packageItem = this.createPackageItem(pkg, index);
             packagesList.appendChild(packageItem);
         });
@@ -3894,7 +3898,7 @@ timezone: UTC`;
             <div class="package-fields">
                 <div class="package-field">
                     <label>Package Name/URL *</label>
-                    <input type="text" value="${pkg.name || ''}" onchange="window.safeUpdatePackageField(${index}, 'name', this.value)" oninput="window.safeValidatePackageField(${index}, this.value, this)" placeholder="e.g., requests or https://example.com/package.whl">
+                    <input type="text" value="${pkg.name || ''}" onchange="window.safeUpdatePackageField(${index}, 'name', this.value)" oninput="window.safeUpdatePackageField(${index}, 'name', this.value); window.safeValidatePackageField(${index}, this.value, this)" placeholder="e.g., requests or https://example.com/package.whl">
                     <div class="package-field-help">PyPI package name or full URL to wheel file</div>
                     <div class="package-validation-message" id="validation-${index}" style="display: none;"></div>
                 </div>
@@ -3917,16 +3921,23 @@ timezone: UTC`;
             source: 'pypi'
         };
         
+        console.log('addPackage: Adding new package', newPackage);
         this.packages.push(newPackage);
         this.packageCounter++;
+        console.log('addPackage: Packages array now has', this.packages.length, 'items');
         this.populatePackagesList();
     }
 
     updatePackageField(index, field, value) {
         // Ensure we have a valid instance and packages array
-        if (!this || !this.packages || !this.packages[index]) return;
+        if (!this || !this.packages || !this.packages[index]) {
+            console.warn('updatePackageField: Invalid state', { index, field, value, hasThis: !!this, hasPackages: !!this?.packages, packagesLength: this?.packages?.length });
+            return;
+        }
         
+        console.log('updatePackageField:', { index, field, value, before: this.packages[index][field] });
         this.packages[index][field] = value;
+        console.log('updatePackageField: Updated', { index, field, value, after: this.packages[index][field] });
     }
 
     validatePackageField(index, value, inputElement) {
