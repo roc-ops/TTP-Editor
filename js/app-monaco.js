@@ -4568,6 +4568,9 @@ timezone: UTC`;
 document.addEventListener('DOMContentLoaded', async () => {
     const editor = new TTPEditor();
     
+    // Make editor globally available
+    window.ttpEditor = editor;
+    
     // Set up global function for Monaco initialization
     window.initializeEditors = async () => {
         await editor.init();
