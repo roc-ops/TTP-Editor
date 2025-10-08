@@ -3891,6 +3891,17 @@ timezone: UTC`;
         const isInstalled = pkg.status === 'success';
         const canInstall = pkg.name && pkg.name.trim() && (pkg.status === 'pending' || pkg.status === 'error');
         
+        console.log('createPackageItem debug:', { 
+            index, 
+            pkgName: pkg.name, 
+            pkgStatus: pkg.status, 
+            canInstall,
+            hasName: !!pkg.name,
+            nameTrimmed: pkg.name ? pkg.name.trim() : '',
+            isPending: pkg.status === 'pending',
+            isError: pkg.status === 'error'
+        });
+        
         const packageItem = document.createElement('div');
         packageItem.className = `package-item ${statusClass}`;
         packageItem.innerHTML = `
@@ -3963,6 +3974,12 @@ timezone: UTC`;
         console.log('updatePackageField:', { index, field, value, before: this.packages[index][field] });
         this.packages[index][field] = value;
         console.log('updatePackageField: Updated', { index, field, value, after: this.packages[index][field] });
+        
+        // If updating the name field, refresh the package list to show/hide install button
+        if (field === 'name') {
+            console.log('updatePackageField: Refreshing package list due to name change');
+            this.populatePackagesList();
+        }
     }
 
     validatePackageField(index, value, inputElement) {
