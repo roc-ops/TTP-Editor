@@ -3912,7 +3912,7 @@ timezone: UTC`;
                     ${pkg.status === 'installing' ? '<span class="loading-spinner">⏳</span>' : ''}
                 </div>
                 <div class="package-item-actions">
-                    ${canInstall ? `<button class="btn btn-primary btn-sm" onclick="window.safeInstallPackage(${index})">📦 Install</button>` : ''}
+                    ${canInstall ? `<button class="btn btn-primary btn-sm install-btn" onclick="window.safeInstallPackage(${index})">📦 Install</button>` : ''}
                     <button class="btn btn-danger btn-sm" onclick="window.safeRemovePackage(${index})">🗑️ Remove</button>
                 </div>
             </div>
@@ -4012,14 +4012,14 @@ timezone: UTC`;
         
         console.log('updateInstallButtonVisibility:', { index, pkgName: pkg.name, pkgStatus: pkg.status, canInstall });
 
-        // Remove all existing install buttons first
-        const existingInstallBtns = actionsContainer.querySelectorAll('button[onclick*="safeInstallPackage"]');
+        // Remove all existing install buttons first (by class to be robust)
+        const existingInstallBtns = actionsContainer.querySelectorAll('button.install-btn, button[onclick*="safeInstallPackage"]');
         existingInstallBtns.forEach(btn => btn.remove());
 
         // Add install button if needed
         if (canInstall) {
             const installBtn = document.createElement('button');
-            installBtn.className = 'btn btn-primary btn-sm';
+            installBtn.className = 'btn btn-primary btn-sm install-btn';
             installBtn.innerHTML = '📦 Install';
             installBtn.onclick = () => window.safeInstallPackage(index);
             
