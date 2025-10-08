@@ -243,7 +243,7 @@ class TTPEditor {
                         {
                             label: 'macro',
                             kind: window.MonacoLanguages.CompletionItemKind.Keyword,
-                            insertText: 'macro def="${1:function_name}">\n\tdef ${1:function_name}(data):\n\t\t# Process data here\n\t\treturn data\n</macro>',
+                            insertText: 'macro>\n\tdef ${1:function_name}(data):\n\t\t# Process data here\n\t\treturn data\n</macro>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP macro definition',
                             range: range
