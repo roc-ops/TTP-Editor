@@ -135,6 +135,17 @@ class TTPEditor {
                     endColumn: word.endColumn
                 };
 
+                // Check if we're inside a group element
+                const textBefore = model.getValueInRange({
+                    startLineNumber: 1,
+                    startColumn: 1,
+                    endLineNumber: position.lineNumber,
+                    endColumn: position.column
+                });
+                
+                const isInGroup = /<group[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</group>');
+                const isInGroupTag = /<group[^>]*$/.test(textBefore);
+
                 const suggestions = [
                     // TTP template structure
                     {
@@ -161,6 +172,227 @@ class TTPEditor {
                         documentation: 'TTP macro definition',
                         range: range
                     },
+                    
+                    // Group attributes (only when in group tag)
+                    ...(isInGroupTag ? [
+                        {
+                            label: 'name',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'name="${1:group_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Group name attribute - defines the key name for group results',
+                            sortText: '00',
+                            range: range
+                        },
+                        {
+                            label: 'input',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'input="${1:input_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Input attribute - specifies which input to process',
+                            sortText: '01',
+                            range: range
+                        },
+                        {
+                            label: 'default',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'default="${1:default_value}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Default attribute - default value if no matches found',
+                            sortText: '02',
+                            range: range
+                        },
+                        {
+                            label: 'method',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'method="${1:method_name}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Method attribute - specifies parsing method',
+                            sortText: '03',
+                            range: range
+                        },
+                        {
+                            label: 'output',
+                            kind: window.MonacoLanguages.CompletionItemKind.Property,
+                            insertText: 'output="${1:output_format}"',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'Output attribute - specifies output format',
+                            sortText: '04',
+                            range: range
+                        }
+                    ] : []),
+                    
+                    // Group functions (only when in group content)
+                    ...(isInGroup ? [
+                        {
+                            label: 'containsall',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Check if group contains all specified values',
+                            sortText: '05',
+                            range: range
+                        },
+                        {
+                            label: 'contains',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Check if group contains specified value',
+                            sortText: '06',
+                            range: range
+                        },
+                        {
+                            label: 'macro',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Run macro function on group results',
+                            sortText: '07',
+                            range: range
+                        },
+                        {
+                            label: 'functions',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Apply functions to group results',
+                            sortText: '08',
+                            range: range
+                        },
+                        {
+                            label: 'chain',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Chain functions from variable',
+                            sortText: '09',
+                            range: range
+                        },
+                        {
+                            label: 'to_ip',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Convert group result to IP address object',
+                            sortText: '10',
+                            range: range
+                        },
+                        {
+                            label: 'exclude',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Exclude group results matching pattern',
+                            sortText: '11',
+                            range: range
+                        },
+                        {
+                            label: 'excludeall',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Exclude all group results matching patterns',
+                            sortText: '12',
+                            range: range
+                        },
+                        {
+                            label: 'del',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Delete group results',
+                            sortText: '13',
+                            range: range
+                        },
+                        {
+                            label: 'sformat',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Format group results using string format',
+                            sortText: '14',
+                            range: range
+                        },
+                        {
+                            label: 'itemize',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Convert group results to list of items',
+                            sortText: '15',
+                            range: range
+                        },
+                        {
+                            label: 'cerberus',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Validate group results using Cerberus schema',
+                            sortText: '16',
+                            range: range
+                        },
+                        {
+                            label: 'void',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Void group results (always returns False)',
+                            sortText: '17',
+                            range: range
+                        },
+                        {
+                            label: 'str_to_unicode',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Convert group results to unicode string',
+                            sortText: '18',
+                            range: range
+                        },
+                        {
+                            label: 'equal',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Check if group result equals specified value',
+                            sortText: '19',
+                            range: range
+                        },
+                        {
+                            label: 'to_int',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Convert group result to integer',
+                            sortText: '20',
+                            range: range
+                        },
+                        {
+                            label: 'contains_val',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Check if group contains specific value',
+                            sortText: '21',
+                            range: range
+                        },
+                        {
+                            label: 'exclude_val',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Exclude group results with specific value',
+                            sortText: '22',
+                            range: range
+                        },
+                        {
+                            label: 'record',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Record group result in template variable',
+                            sortText: '23',
+                            range: range
+                        },
+                        {
+                            label: 'set',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Set group result to specific value',
+                            sortText: '24',
+                            range: range
+                        },
+                        {
+                            label: 'expand',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Expand group results',
+                            sortText: '25',
+                            range: range
+                        },
+                        {
+                            label: 'validate',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Validate group results',
+                            sortText: '26',
+                            range: range
+                        },
+                        {
+                            label: 'lookup',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Lookup group result in lookup table',
+                            sortText: '27',
+                            range: range
+                        },
+                        {
+                            label: 'items2dict',
+                            kind: window.MonacoLanguages.CompletionItemKind.Function,
+                            documentation: 'Convert group items to dictionary',
+                            sortText: '28',
+                            range: range
+                        }
+                    ] : []),
                     
                     // TTP Action Functions (highest priority)
                     { label: 'append', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Append provided string to the end of match result', sortText: '01', range: range },
@@ -321,6 +553,32 @@ class TTPEditor {
                 
                 // TTP function documentation
                 const ttpFunctions = {
+                    // Group Functions
+                    'containsall': 'Check if group contains all specified values',
+                    'contains': 'Check if group contains specified value',
+                    'macro': 'Run macro function on group results',
+                    'functions': 'Apply functions to group results',
+                    'chain': 'Chain functions from variable',
+                    'to_ip': 'Convert group result to IP address object',
+                    'exclude': 'Exclude group results matching pattern',
+                    'excludeall': 'Exclude all group results matching patterns',
+                    'del': 'Delete group results',
+                    'sformat': 'Format group results using string format',
+                    'itemize': 'Convert group results to list of items',
+                    'cerberus': 'Validate group results using Cerberus schema',
+                    'void': 'Void group results (always returns False)',
+                    'str_to_unicode': 'Convert group results to unicode string',
+                    'equal': 'Check if group result equals specified value',
+                    'to_int': 'Convert group result to integer',
+                    'contains_val': 'Check if group contains specific value',
+                    'exclude_val': 'Exclude group results with specific value',
+                    'record': 'Record group result in template variable',
+                    'set': 'Set group result to specific value',
+                    'expand': 'Expand group results',
+                    'validate': 'Validate group results',
+                    'lookup': 'Lookup group result in lookup table',
+                    'items2dict': 'Convert group items to dictionary',
+                    
                     // TTP Action Functions
                     'append': 'Append provided string to the end of match result',
                     'chain': 'Add functions from chain variable',
