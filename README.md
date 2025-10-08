@@ -160,6 +160,7 @@ TTP Editor/
 │   ├── app-monaco.js       # Main application logic with Monaco Editor
 │   ├── ttp-processor.js    # TTP processing wrapper
 │   └── examples.js         # Sample templates and data
+├── LICENSE                 # MIT License
 └── README.md               # This file
 ```
 
@@ -269,11 +270,15 @@ This is a standalone application. To contribute:
 
 ## License
 
-This project is open source. Please check individual dependencies for their licenses:
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- Pyodide: Mozilla Public License 2.0
-- TTP: MIT License
-- Monaco Editor: MIT License
+### Dependencies
+
+This project uses the following open-source libraries:
+
+- **Pyodide**: Mozilla Public License 2.0
+- **TTP**: MIT License  
+- **Monaco Editor**: MIT License
 
 ## Acknowledgments
 
