@@ -3170,8 +3170,8 @@ timezone: UTC`;
     }
 
     updateStatus(message) {
-        if (this.elements.statusBar) {
-            this.elements.statusBar.textContent = message;
+        if (this.elements.statusMessage) {
+            this.elements.statusMessage.textContent = message;
         }
     }
 
