@@ -3878,19 +3878,19 @@ timezone: UTC`;
             <div class="package-item-header">
                 <div class="package-item-name">${pkg.name || 'Unnamed Package'}</div>
                 <div class="package-item-actions">
-                    <button class="btn btn-danger btn-sm" onclick="window.ttpEditor.removePackage(${index})">🗑️ Remove</button>
+                    <button class="btn btn-danger btn-sm" onclick="window.safeRemovePackage(${index})">🗑️ Remove</button>
                 </div>
             </div>
             <div class="package-fields">
                 <div class="package-field">
                     <label>Package Name/URL *</label>
-                    <input type="text" value="${pkg.name || ''}" onchange="window.ttpEditor.updatePackageField(${index}, 'name', this.value)" oninput="window.ttpEditor.validatePackageField(${index}, this.value, this)" placeholder="e.g., requests or https://example.com/package.whl">
+                    <input type="text" value="${pkg.name || ''}" onchange="window.safeUpdatePackageField(${index}, 'name', this.value)" oninput="window.safeValidatePackageField(${index}, this.value, this)" placeholder="e.g., requests or https://example.com/package.whl">
                     <div class="package-field-help">PyPI package name or full URL to wheel file</div>
                     <div class="package-validation-message" id="validation-${index}" style="display: none;"></div>
                 </div>
                 <div class="package-field">
                     <label>Source Type</label>
-                    <select onchange="window.ttpEditor.updatePackageField(${index}, 'source', this.value); window.ttpEditor.validatePackageField(${index}, document.querySelector('input[onchange*=\"updatePackageField(${index}\"]').value, document.querySelector('input[onchange*=\"updatePackageField(${index}\"]'))">
+                    <select onchange="window.safeUpdatePackageField(${index}, 'source', this.value); const input = document.querySelector('input[onchange*=\"safeUpdatePackageField(${index}\"]'); if(input) window.safeValidatePackageField(${index}, input.value, input);">
                         <option value="pypi" ${pkg.source === 'pypi' ? 'selected' : ''}>PyPI</option>
                         <option value="url" ${pkg.source === 'url' ? 'selected' : ''}>URL</option>
                     </select>
@@ -3913,13 +3913,15 @@ timezone: UTC`;
     }
 
     updatePackageField(index, field, value) {
-        if (this.packages[index]) {
-            this.packages[index][field] = value;
-        }
+        // Ensure we have a valid instance and packages array
+        if (!this || !this.packages || !this.packages[index]) return;
+        
+        this.packages[index][field] = value;
     }
 
     validatePackageField(index, value, inputElement) {
-        if (!this.packages[index]) return;
+        // Ensure we have a valid instance and packages array
+        if (!this || !this.packages || !this.packages[index]) return;
 
         const packageName = value.toLowerCase().trim();
         const source = this.packages[index].source;
@@ -4545,3 +4547,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         editor.hideLoadingOverlay();
     }
 });
+
+// Global helper functions for HTML event handlers
+window.safeUpdatePackageField = function(index, field, value) {
+    if (window.ttpEditor && window.ttpEditor.updatePackageField) {
+        window.ttpEditor.updatePackageField(index, field, value);
+    }
+};
+
+window.safeValidatePackageField = function(index, value, inputElement) {
+    if (window.ttpEditor && window.ttpEditor.validatePackageField) {
+        window.ttpEditor.validatePackageField(index, value, inputElement);
+    }
+};
+
+window.safeRemovePackage = function(index) {
+    if (window.ttpEditor && window.ttpEditor.removePackage) {
+        window.ttpEditor.removePackage(index);
+    }
+};
