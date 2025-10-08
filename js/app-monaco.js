@@ -67,7 +67,10 @@ class TTPEditor {
                 { open: '<', close: '>' },
                 { open: '"', close: '"' },
                 { open: "'", close: "'" }
-            ]
+            ],
+            // Disable auto-closing for XML tags
+            autoClosingBrackets: 'never',
+            autoClosingQuotes: 'languageDefined'
         });
 
         // Set token provider
@@ -1685,7 +1688,10 @@ class TTPEditor {
             folding: true,
             renderWhitespace: 'selection',
             fontSize: 13,
-            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace'
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+            // Disable auto-closing for XML tags to prevent conflicts with snippets
+            autoClosingBrackets: 'never',
+            autoClosingQuotes: 'languageDefined'
         });
 
         // Hide original textarea
