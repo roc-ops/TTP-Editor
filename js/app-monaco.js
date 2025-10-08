@@ -3936,16 +3936,7 @@ timezone: UTC`;
             ${pkg.status === 'success' ? `<div class="package-success">✅ Successfully installed and ready to use</div>` : ''}
         `;
         
-        // Add direct event listeners for debugging
-        const input = packageItem.querySelector('input[type="text"]');
-        if (input) {
-            input.addEventListener('input', (e) => {
-                console.log('Direct input event fired:', e.target.value);
-            });
-            input.addEventListener('change', (e) => {
-                console.log('Direct change event fired:', e.target.value);
-            });
-        }
+        // Note: Event handlers are set via HTML oninput/onchange attributes
         
         return packageItem;
     }
@@ -3988,18 +3979,19 @@ timezone: UTC`;
     debouncedUpdateInstallButton(index) {
         // Clear any existing timeout for this package
         if (this.installButtonTimeouts.has(index)) {
+            console.log('debouncedUpdateInstallButton: Clearing existing timeout for package', index);
             clearTimeout(this.installButtonTimeouts.get(index));
         }
         
         // Set a new timeout to update the install button after user stops typing
         const timeoutId = window.setTimeout(() => {
-            console.log('debouncedUpdateInstallButton: Updating install button for package', index);
+            console.log('debouncedUpdateInstallButton: Timeout fired for package', index);
             this.updateInstallButtonVisibility(index);
             this.installButtonTimeouts.delete(index);
         }, 150); // 150ms delay
         
         this.installButtonTimeouts.set(index, timeoutId);
-        console.log('debouncedUpdateInstallButton: Set timeout for package', index, 'delay: 150ms');
+        console.log('debouncedUpdateInstallButton: Set timeout for package', index, 'delay: 150ms, timeoutId:', timeoutId);
     }
 
     updateInstallButtonVisibility(index) {
@@ -4020,10 +4012,12 @@ timezone: UTC`;
         
         console.log('updateInstallButtonVisibility:', { index, pkgName: pkg.name, pkgStatus: pkg.status, canInstall });
 
-        // Update the install button
-        const existingInstallBtn = actionsContainer.querySelector('button[onclick*="safeInstallPackage"]');
-        if (canInstall && !existingInstallBtn) {
-            // Add install button
+        // Remove all existing install buttons first
+        const existingInstallBtns = actionsContainer.querySelectorAll('button[onclick*="safeInstallPackage"]');
+        existingInstallBtns.forEach(btn => btn.remove());
+
+        // Add install button if needed
+        if (canInstall) {
             const installBtn = document.createElement('button');
             installBtn.className = 'btn btn-primary btn-sm';
             installBtn.innerHTML = '📦 Install';
@@ -4036,9 +4030,9 @@ timezone: UTC`;
             } else {
                 actionsContainer.appendChild(installBtn);
             }
-        } else if (!canInstall && existingInstallBtn) {
-            // Remove install button
-            existingInstallBtn.remove();
+            console.log('updateInstallButtonVisibility: Added install button for package', index);
+        } else {
+            console.log('updateInstallButtonVisibility: No install button needed for package', index);
         }
     }
 
