@@ -240,9 +240,41 @@ class TTPEditor {
                         {
                             label: 'macro',
                             kind: window.MonacoLanguages.CompletionItemKind.Keyword,
-                            insertText: '<macro name="${1:macro_name}">\n\t${2:macro_content}\n</macro>',
+                            insertText: '<macro def="${1:function_name}">\n\t${2:def function_name(data):\n\t\t# Process data here\n\t\treturn data}\n</macro>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP macro definition',
+                            range: range
+                        },
+                        {
+                            label: 'input',
+                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            insertText: '<input name="${1:input_name}" load="${2:text}">\n\t${3:input_data}\n</input>',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'TTP input definition',
+                            range: range
+                        },
+                        {
+                            label: 'output',
+                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            insertText: '<output name="${1:output_name}" format="${2:yaml}">\n\t${3:output_config}\n</output>',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'TTP output definition',
+                            range: range
+                        },
+                        {
+                            label: 'lookup',
+                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            insertText: '<lookup name="${1:lookup_name}" load="${2:text}">\n\t${3:lookup_data}\n</lookup>',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'TTP lookup table definition',
+                            range: range
+                        },
+                        {
+                            label: 'extend',
+                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            insertText: '<extend template="${1:template_name}" name="${2:extend_name}">\n\t${3:extend_content}\n</extend>',
+                            insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: 'TTP extend definition',
                             range: range
                         }
                     ] : []),
