@@ -5,6 +5,12 @@ class TTPEditor {
         this.elements = {};
         this.ttpProcessor = null;
         
+        // Status bar elements
+        this.statusBar = null;
+        this.statusMessage = null;
+        this.pythonVersion = null;
+        this.ttpVersion = null;
+        
         // Monaco editors
         this.dataEditor = null;
         this.templateEditor = null;
@@ -1604,6 +1610,9 @@ class TTPEditor {
         this.ttpProcessor = new TTPProcessor();
         await this.ttpProcessor.initialize();
         
+        // Update version info in status bar
+        this.updateVersionInfo();
+        
         this.setupResultEditor();
         
         // Load configuration from URL parameters
@@ -1644,6 +1653,12 @@ class TTPEditor {
             packagesModal: document.getElementById('packagesModal'),
             addPackageBtn: document.getElementById('addPackageBtn'),
             packagesList: document.getElementById('packagesList'),
+            
+            // Status bar elements
+            statusBar: document.getElementById('statusBar'),
+            statusMessage: document.getElementById('statusMessage'),
+            pythonVersion: document.getElementById('pythonVersion'),
+            ttpVersion: document.getElementById('ttpVersion'),
             savePackagesBtn: document.getElementById('savePackagesBtn'),
             clearPackagesBtn: document.getElementById('clearPackagesBtn'),
             cancelPackagesBtn: document.getElementById('cancelPackagesBtn'),
@@ -2825,6 +2840,8 @@ timezone: UTC`;
             return;
         }
 
+        this.updateStatusMessage('Processing template...');
+
         const dataValue = this.dataEditor.getValue();
         const templateValue = this.templateEditor.getValue();
         
@@ -2850,10 +2867,12 @@ timezone: UTC`;
             // Add processing time to result
             result.processingTime = processingTime;
             this.displayResults(result);
+            this.updateStatusMessage('Processing completed');
         } catch (error) {
             console.error('Processing error:', error);
             console.error('Error stack:', error.stack);
             this.showError(`Processing failed: ${error.message}`);
+            this.updateStatusMessage('Processing failed');
         }
     }
 
@@ -4337,6 +4356,41 @@ timezone: UTC`;
     hideLoadingOverlay() {
         if (this.elements.loadingOverlay) {
             this.elements.loadingOverlay.style.display = 'none';
+        }
+    }
+
+    // Status Bar Methods
+    updateStatusMessage(message) {
+        if (this.elements.statusMessage) {
+            this.elements.statusMessage.textContent = message;
+        }
+    }
+
+    async updateVersionInfo() {
+        if (!this.ttpProcessor || !this.ttpProcessor.isReady()) {
+            return;
+        }
+
+        try {
+            // Get Python version
+            const pythonVersion = await this.ttpProcessor.getPythonVersion();
+            if (this.elements.pythonVersion && pythonVersion) {
+                this.elements.pythonVersion.textContent = `Python: ${pythonVersion}`;
+            }
+
+            // Get TTP version
+            const ttpVersion = await this.ttpProcessor.getTTPVersion();
+            if (this.elements.ttpVersion && ttpVersion) {
+                this.elements.ttpVersion.textContent = `TTP: ${ttpVersion}`;
+            }
+        } catch (error) {
+            console.warn('Failed to get version info:', error);
+            if (this.elements.pythonVersion) {
+                this.elements.pythonVersion.textContent = 'Python: Unknown';
+            }
+            if (this.elements.ttpVersion) {
+                this.elements.ttpVersion.textContent = 'TTP: Unknown';
+            }
         }
     }
 

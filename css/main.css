@@ -1460,6 +1460,43 @@ body {
     border-left: 3px solid #4299e1;
 }
 
+/* Status Bar */
+.status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 8px 16px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #4a5568;
+    z-index: 1000;
+}
+
+.status-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.status-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.status-right span {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+}
+
 /* Package status styling */
 .package-item.package-pending {
     border-left: 3px solid #a0aec0;

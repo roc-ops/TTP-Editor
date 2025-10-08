@@ -765,6 +765,29 @@ ttp.__version__
         }
     }
 
+    async getPythonVersion() {
+        try {
+            if (!this.pyodide || !this.isInitialized) {
+                return null;
+            }
+            
+            const version = this.pyodide.runPython(`
+import sys
+print(sys.version)
+sys.version
+`);
+            if (version && typeof version === 'string') {
+                // Extract just the version number (e.g., "3.13.0" from "3.13.0 (main, Dec 21 2023, 10:00:00)")
+                const versionMatch = version.match(/(\d+\.\d+\.\d+)/);
+                return versionMatch ? versionMatch[1] : version.split(' ')[0];
+            }
+            return null;
+        } catch (error) {
+            console.error('Error getting Python version:', error);
+            return null;
+        }
+    }
+
     // Input management methods
     addInput(data, inputName = 'Default_Input', templateName = '_root_template_', groups = null) {
         this.inputs.push({
