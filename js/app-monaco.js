@@ -135,7 +135,7 @@ class TTPEditor {
                     endColumn: word.endColumn
                 };
 
-                // Check context for different TTP elements
+                // Check context for different TTP elements with more precise detection
                 const textBefore = model.getValueInRange({
                     startLineNumber: 1,
                     startColumn: 1,
@@ -143,18 +143,74 @@ class TTPEditor {
                     endColumn: position.column
                 });
                 
-                const isInGroup = /<group[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</group>');
+                // More precise context detection - find the most recent unclosed tag
+                const findCurrentContext = () => {
+                    const lines = textBefore.split('\n');
+                    let currentTag = null;
+                    let tagDepth = 0;
+                    
+                    for (let i = lines.length - 1; i >= 0; i--) {
+                        const line = lines[i];
+                        
+                        // Check for closing tags
+                        const closingTags = line.match(/<\/\w+>/g);
+                        if (closingTags) {
+                            tagDepth += closingTags.length;
+                        }
+                        
+                        // Check for opening tags
+                        const openingTags = line.match(/<(\w+)[^>]*>/g);
+                        if (openingTags) {
+                            for (const tag of openingTags) {
+                                const tagName = tag.match(/<(\w+)/)[1];
+                                if (tagDepth > 0) {
+                                    tagDepth--;
+                                } else {
+                                    // This is the most recent unclosed tag
+                                    currentTag = tagName;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (currentTag) break;
+                    }
+                    
+                    return currentTag;
+                };
+                
+                const currentContext = findCurrentContext();
+                
+                // Set context flags based on current tag
+                const isInGroup = currentContext === 'group';
                 const isInGroupTag = /<group[^>]*$/.test(textBefore);
-                const isInInput = /<input[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</input>');
+                const isInInput = currentContext === 'input';
                 const isInInputTag = /<input[^>]*$/.test(textBefore);
-                const isInOutput = /<output[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</output>');
+                const isInOutput = currentContext === 'output';
                 const isInOutputTag = /<output[^>]*$/.test(textBefore);
-                const isInTemplate = /<template[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</template>');
+                const isInTemplate = currentContext === 'template';
                 const isInTemplateTag = /<template[^>]*$/.test(textBefore);
-                const isInLookup = /<lookup[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</lookup>');
+                const isInLookup = currentContext === 'lookup';
                 const isInLookupTag = /<lookup[^>]*$/.test(textBefore);
-                const isInExtend = /<extend[^>]*>[\s\S]*?$/.test(textBefore) && !textBefore.includes('</extend>');
+                const isInExtend = currentContext === 'extend';
                 const isInExtendTag = /<extend[^>]*$/.test(textBefore);
+                
+                // Debug logging
+                console.log('TTP Completion Context:', {
+                    currentContext,
+                    isInGroup,
+                    isInGroupTag,
+                    isInOutput,
+                    isInOutputTag,
+                    isInInput,
+                    isInInputTag,
+                    isInTemplate,
+                    isInTemplateTag,
+                    isInLookup,
+                    isInLookupTag,
+                    isInExtend,
+                    isInExtendTag
+                });
 
                 const suggestions = [
                     // TTP template structure
