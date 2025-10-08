@@ -3912,6 +3912,18 @@ timezone: UTC`;
                 </div>
             </div>
         `;
+        
+        // Add direct event listeners for debugging
+        const input = packageItem.querySelector('input[type="text"]');
+        if (input) {
+            input.addEventListener('input', (e) => {
+                console.log('Direct input event fired:', e.target.value);
+            });
+            input.addEventListener('change', (e) => {
+                console.log('Direct change event fired:', e.target.value);
+            });
+        }
+        
         return packageItem;
     }
 
@@ -4571,19 +4583,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Global helper functions for HTML event handlers
 window.safeUpdatePackageField = function(index, field, value) {
+    console.log('safeUpdatePackageField called:', { index, field, value, hasEditor: !!window.ttpEditor });
     if (window.ttpEditor && window.ttpEditor.updatePackageField) {
         window.ttpEditor.updatePackageField(index, field, value);
+    } else {
+        console.warn('safeUpdatePackageField: TTP Editor not available');
     }
 };
 
 window.safeValidatePackageField = function(index, value, inputElement) {
+    console.log('safeValidatePackageField called:', { index, value, hasEditor: !!window.ttpEditor });
     if (window.ttpEditor && window.ttpEditor.validatePackageField) {
         window.ttpEditor.validatePackageField(index, value, inputElement);
+    } else {
+        console.warn('safeValidatePackageField: TTP Editor not available');
     }
 };
 
 window.safeRemovePackage = function(index) {
+    console.log('safeRemovePackage called:', { index, hasEditor: !!window.ttpEditor });
     if (window.ttpEditor && window.ttpEditor.removePackage) {
         window.ttpEditor.removePackage(index);
+    } else {
+        console.warn('safeRemovePackage: TTP Editor not available');
     }
 };
