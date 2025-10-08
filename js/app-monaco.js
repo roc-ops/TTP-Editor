@@ -3884,12 +3884,13 @@ timezone: UTC`;
             <div class="package-fields">
                 <div class="package-field">
                     <label>Package Name/URL *</label>
-                    <input type="text" value="${pkg.name || ''}" onchange="window.ttpEditor.updatePackageField(${index}, 'name', this.value)" placeholder="e.g., requests or https://example.com/package.whl">
+                    <input type="text" value="${pkg.name || ''}" onchange="window.ttpEditor.updatePackageField(${index}, 'name', this.value)" oninput="window.ttpEditor.validatePackageField(${index}, this.value, this)" placeholder="e.g., requests or https://example.com/package.whl">
                     <div class="package-field-help">PyPI package name or full URL to wheel file</div>
+                    <div class="package-validation-message" id="validation-${index}" style="display: none;"></div>
                 </div>
                 <div class="package-field">
                     <label>Source Type</label>
-                    <select onchange="window.ttpEditor.updatePackageField(${index}, 'source', this.value)">
+                    <select onchange="window.ttpEditor.updatePackageField(${index}, 'source', this.value); window.ttpEditor.validatePackageField(${index}, document.querySelector('input[onchange*=\"updatePackageField(${index}\"]').value, document.querySelector('input[onchange*=\"updatePackageField(${index}\"]'))">
                         <option value="pypi" ${pkg.source === 'pypi' ? 'selected' : ''}>PyPI</option>
                         <option value="url" ${pkg.source === 'url' ? 'selected' : ''}>URL</option>
                     </select>
@@ -3914,6 +3915,78 @@ timezone: UTC`;
     updatePackageField(index, field, value) {
         if (this.packages[index]) {
             this.packages[index][field] = value;
+        }
+    }
+
+    validatePackageField(index, value, inputElement) {
+        if (!this.packages[index]) return;
+
+        const packageName = value.toLowerCase().trim();
+        const source = this.packages[index].source;
+        const validationElement = document.getElementById(`validation-${index}`);
+        
+        if (!validationElement) return;
+
+        // Clear previous validation
+        validationElement.style.display = 'none';
+        validationElement.className = 'package-validation-message';
+        inputElement.style.borderColor = '';
+
+        if (!packageName) {
+            validationElement.style.display = 'none';
+            return;
+        }
+
+        const knownIncompatible = [
+            'numpy', 'pandas', 'scipy', 'matplotlib', 'tensorflow', 'torch', 'pytorch',
+            'opencv-python', 'pillow', 'scikit-learn', 'numba', 'cython', 'lxml',
+            'psycopg2', 'mysql-connector-python', 'pymongo', 'redis', 'sqlalchemy'
+        ];
+
+        const suspiciousPatterns = [
+            'numpy', 'pandas', 'scipy', 'matplotlib', 'tensorflow', 'torch',
+            'opencv', 'pillow', 'sklearn', 'numba', 'cython', 'lxml',
+            'psycopg', 'mysql', 'mongo', 'redis', 'sqlalchemy'
+        ];
+
+        let message = '';
+        let isError = false;
+
+        // Check for known incompatible packages
+        if (knownIncompatible.some(incompatible => packageName.includes(incompatible))) {
+            message = `⚠️ "${value}" is known to be incompatible with Pyodide (contains C extensions)`;
+            isError = true;
+        }
+        // Validate URL format for URL packages
+        else if (source === 'url') {
+            if (!packageName.startsWith('http://') && !packageName.startsWith('https://')) {
+                message = `⚠️ URL should start with http:// or https://`;
+                isError = true;
+            } else if (!packageName.endsWith('.whl')) {
+                message = `⚠️ URL should point to a .whl file`;
+                isError = true;
+            } else {
+                message = `✅ URL format looks correct`;
+            }
+        }
+        // Validate PyPI package name format
+        else if (source === 'pypi') {
+            if (packageName.includes('/') || packageName.includes('\\')) {
+                message = `⚠️ This looks like a URL but source is set to PyPI`;
+                isError = true;
+            } else if (suspiciousPatterns.some(pattern => packageName.includes(pattern))) {
+                message = `⚠️ "${value}" may contain C extensions. Verify it's pure Python.`;
+                isError = true;
+            } else {
+                message = `✅ Package name looks good`;
+            }
+        }
+
+        if (message) {
+            validationElement.textContent = message;
+            validationElement.className = `package-validation-message ${isError ? 'error' : 'success'}`;
+            validationElement.style.display = 'block';
+            inputElement.style.borderColor = isError ? '#f56565' : '#68d391';
         }
     }
 
@@ -3942,6 +4015,13 @@ timezone: UTC`;
             return;
         }
 
+        // Validate package compatibility
+        const validationResults = this.validatePackages(validPackages);
+        if (!validationResults.isValid) {
+            this.showNotification(validationResults.message, 'error');
+            return;
+        }
+
         // Save packages
         this.packages = validPackages;
         
@@ -3950,6 +4030,74 @@ timezone: UTC`;
         
         this.showNotification(`Saved ${validPackages.length} package(s)`, 'success');
         this.closePackagesModal();
+    }
+
+    validatePackages(packages) {
+        const knownIncompatible = [
+            'numpy', 'pandas', 'scipy', 'matplotlib', 'tensorflow', 'torch', 'pytorch',
+            'opencv-python', 'pillow', 'scikit-learn', 'numba', 'cython', 'lxml',
+            'psycopg2', 'mysql-connector-python', 'pymongo', 'redis', 'sqlalchemy'
+        ];
+
+        const knownCompatible = [
+            'requests', 'pyyaml', 'jsonschema', 'python-dateutil', 'urllib3',
+            'certifi', 'charset-normalizer', 'idna', 'pyparsing', 'six',
+            'typing-extensions', 'zipp', 'importlib-metadata', 'packaging'
+        ];
+
+        for (const pkg of packages) {
+            const packageName = pkg.name.toLowerCase().trim();
+            
+            // Check for known incompatible packages
+            if (knownIncompatible.some(incompatible => packageName.includes(incompatible))) {
+                return {
+                    isValid: false,
+                    message: `Package "${pkg.name}" is known to be incompatible with Pyodide (contains C extensions). Please use a pure Python alternative.`
+                };
+            }
+
+            // Validate URL format for URL packages
+            if (pkg.source === 'url') {
+                if (!packageName.startsWith('http://') && !packageName.startsWith('https://')) {
+                    return {
+                        isValid: false,
+                        message: `Package "${pkg.name}" appears to be a URL but doesn't start with http:// or https://`
+                    };
+                }
+                if (!packageName.endsWith('.whl')) {
+                    return {
+                        isValid: false,
+                        message: `Package "${pkg.name}" should be a .whl file for URL packages`
+                    };
+                }
+            }
+
+            // Validate PyPI package name format
+            if (pkg.source === 'pypi') {
+                if (packageName.includes('/') || packageName.includes('\\')) {
+                    return {
+                        isValid: false,
+                        message: `Package "${pkg.name}" appears to be a URL but source is set to PyPI. Please change source to URL or use just the package name.`
+                    };
+                }
+                
+                // Check for common patterns that suggest C extensions
+                const suspiciousPatterns = [
+                    'numpy', 'pandas', 'scipy', 'matplotlib', 'tensorflow', 'torch',
+                    'opencv', 'pillow', 'sklearn', 'numba', 'cython', 'lxml',
+                    'psycopg', 'mysql', 'mongo', 'redis', 'sqlalchemy'
+                ];
+                
+                if (suspiciousPatterns.some(pattern => packageName.includes(pattern))) {
+                    return {
+                        isValid: false,
+                        message: `Package "${pkg.name}" may contain C extensions and might not work with Pyodide. Please verify it's pure Python or use a URL to a compatible wheel file.`
+                    };
+                }
+            }
+        }
+
+        return { isValid: true, message: '' };
     }
 
     clearPackages() {

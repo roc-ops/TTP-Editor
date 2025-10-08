@@ -357,12 +357,32 @@
                         </div>
                         
                         <div class="packages-info">
-                            <h5>Package Sources</h5>
-                            <ul>
-                                <li><strong>PyPI:</strong> Enter package name (e.g., <code>requests</code>, <code>pandas</code>)</li>
-                                <li><strong>URL:</strong> Enter full URL to wheel file (e.g., <code>https://example.com/package.whl</code>)</li>
-                                <li><strong>Note:</strong> Packages are loaded when processing starts and cached in browser</li>
-                            </ul>
+                            <h5>Package Requirements & Sources</h5>
+                            <div class="packages-requirements">
+                                <h6>⚠️ Important Requirements:</h6>
+                                <ul>
+                                    <li><strong>Pure Python Only:</strong> Packages must be pure Python (no C extensions)</li>
+                                    <li><strong>Wheel Files:</strong> Must be <code>-none-any.whl</code> format for PyPI packages</li>
+                                    <li><strong>Pyodide Compatible:</strong> Packages with C extensions need special Pyodide builds</li>
+                                </ul>
+                            </div>
+                            <div class="packages-sources">
+                                <h6>Package Sources:</h6>
+                                <ul>
+                                    <li><strong>PyPI:</strong> Enter package name (e.g., <code>requests</code>, <code>pyyaml</code>)</li>
+                                    <li><strong>URL:</strong> Enter full URL to wheel file (e.g., <code>https://example.com/package.whl</code>)</li>
+                                    <li><strong>Note:</strong> Packages are loaded when processing starts and cached in browser</li>
+                                </ul>
+                            </div>
+                            <div class="packages-examples">
+                                <h6>✅ Compatible Examples:</h6>
+                                <ul>
+                                    <li><code>requests</code> - HTTP library</li>
+                                    <li><code>pyyaml</code> - YAML parser</li>
+                                    <li><code>jsonschema</code> - JSON validation</li>
+                                    <li><code>python-dateutil</code> - Date utilities</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                     

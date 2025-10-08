@@ -115,7 +115,23 @@ Install additional Python packages to extend TTP functionality:
 1. Click "Config" → "📦 Packages"
 2. Add packages by name (PyPI) or URL (wheel files)
 3. Packages are loaded when processing starts and cached in browser
-4. Perfect for adding libraries like `requests`, `pandas`, `numpy`, etc.
+4. **Important**: Only pure Python packages are supported (no C extensions)
+
+**⚠️ Package Requirements:**
+- **Pure Python Only**: Packages must be pure Python (no C extensions)
+- **Wheel Files**: PyPI packages must be `-none-any.whl` format
+- **Pyodide Compatible**: Packages with C extensions need special Pyodide builds
+
+**✅ Compatible Examples:**
+- `requests` - HTTP library
+- `pyyaml` - YAML parser  
+- `jsonschema` - JSON validation
+- `python-dateutil` - Date utilities
+
+**❌ Incompatible Examples:**
+- `numpy`, `pandas`, `scipy` - Contain C extensions
+- `matplotlib`, `tensorflow` - Require compiled libraries
+- `opencv-python`, `pillow` - Image processing with C code
 
 **Example Package Configuration:**
 - **Package Name**: `requests` (PyPI package)
