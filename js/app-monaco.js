@@ -1351,15 +1351,23 @@ class TTPEditor {
                     ] : [])
                 ];
                 
-                // Add range to all suggestions
-                suggestions.forEach(suggestion => {
+                // Validate and clean suggestions
+                const validSuggestions = suggestions.filter(suggestion => {
+                    // Ensure all required properties exist
+                    return suggestion && 
+                           suggestion.label && 
+                           suggestion.kind !== undefined &&
+                           suggestion.insertText;
+                }).map(suggestion => {
+                    // Ensure range is set
                     if (!suggestion.range) {
                         suggestion.range = range;
                     }
+                    return suggestion;
                 });
                 
-                console.log('TTP completion triggered:', suggestions.length, 'suggestions');
-                return { suggestions };
+                console.log('TTP completion triggered:', validSuggestions.length, 'suggestions');
+                return { suggestions: validSuggestions };
             }
         });
 

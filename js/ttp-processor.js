@@ -30,8 +30,9 @@ class TTPProcessor {
         let customFunctionsCode = '';
         if (this.customFunctions && this.customFunctions.length > 0) {
             customFunctionsCode = this.customFunctions
-                .filter(f => f.code && f.code.trim())
-                .map(f => f.code)
+                .filter(f => f && f.code && f.code.trim() && f.code.includes('def '))
+                .map(f => f.code.trim())
+                .filter(code => code.length > 0)
                 .join('\n\n');
         }
 
@@ -109,16 +110,17 @@ def process_ttp_template(data_text, template_text, output_format='json', global_
 
                     print(f"TTP Debug: Processing function config: {func_dict}")
 
-                    if func_name and scope:
-                        # Get the function from globals (it should be available from custom functions defined above)
-                        if func_name in globals():
-                            func = globals()[func_name]
+                    # Validate function before adding
+                    if func_name and scope and func_name in globals():
+                        func = globals()[func_name]
+                        # Additional validation - check if it's actually a function
+                        if callable(func):
                             parser.add_function(func, scope, name=name, add_ttp=add_ttp)
                             print(f"TTP Debug: Added function {func_name} with scope {scope}")
                         else:
-                            print(f"TTP Debug: Function {func_name} not found in globals")
+                            print(f"TTP Debug: {func_name} is not callable, skipping")
                     else:
-                        print(f"TTP Debug: Missing required function_name or scope: {func_name}, {scope}")
+                        print(f"TTP Debug: Missing required function_name, scope, or function not found: {func_name}, {scope}")
                 except Exception as e:
                     print(f"TTP Debug: Error adding function: {str(e)}")
                     import traceback
