@@ -458,6 +458,23 @@ def get_template_info(template_text):
 
             console.log('TTP processor initialized successfully');
             this.isInitialized = true;
+            
+            // Test TTP availability immediately after initialization
+            try {
+                const testTTP = this.pyodide.runPython(`
+try:
+    import ttp
+    print(f"TTP version: {ttp.__version__}")
+    True
+except Exception as e:
+    print(f"TTP test failed: {e}")
+    False
+`);
+                console.log('TTP availability test:', testTTP);
+            } catch (error) {
+                console.warn('TTP availability test failed:', error);
+            }
+            
             return this.pyodide;
 
         } catch (error) {
@@ -708,26 +725,33 @@ def get_template_info(template_text):
                 return null;
             }
             
-            // Check if TTP is available before trying to get version
-            const ttpAvailable = this.pyodide.runPython(`
-try:
-    import ttp
-    True
-except ImportError:
-    False
-`);
+            // Try to get TTP version directly, with retry logic
+            let attempts = 0;
+            const maxAttempts = 3;
             
-            if (!ttpAvailable) {
-                console.warn('TTP module not available yet');
-                return null;
-            }
-            
-            // Get TTP version from Python
-            const version = this.pyodide.runPython(`
+            while (attempts < maxAttempts) {
+                try {
+                    // Get TTP version from Python
+                    const version = this.pyodide.runPython(`
 import ttp
 print(ttp.__version__)
 `);
-            return version.trim();
+                    const cleanVersion = version.trim();
+                    if (cleanVersion && cleanVersion !== 'None') {
+                        return cleanVersion;
+                    }
+                } catch (error) {
+                    if (attempts === maxAttempts - 1) {
+                        console.warn('Could not get TTP version after retries:', error);
+                        return null;
+                    }
+                    // Wait a bit before retrying
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                attempts++;
+            }
+            
+            return null;
         } catch (error) {
             console.warn('Could not get TTP version:', error);
             return null;

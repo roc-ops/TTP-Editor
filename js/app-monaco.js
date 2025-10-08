@@ -1921,12 +1921,18 @@ class TTPEditor {
     setupDocumentation() {
         // Update documentation button with TTP version when processor is ready
         if (this.ttpProcessor && this.ttpProcessor.isReady()) {
-            this.updateDocumentationVersion();
+            // Add a small delay to ensure TTP is fully loaded
+            setTimeout(() => {
+                this.updateDocumentationVersion();
+            }, 500);
         } else {
             // Wait for processor to be initialized and ready
             const checkProcessor = () => {
                 if (this.ttpProcessor && this.ttpProcessor.isReady()) {
-                    this.updateDocumentationVersion();
+                    // Add a small delay to ensure TTP is fully loaded
+                    setTimeout(() => {
+                        this.updateDocumentationVersion();
+                    }, 500);
                 } else {
                     setTimeout(checkProcessor, 100);
                 }
