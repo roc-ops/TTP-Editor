@@ -614,6 +614,119 @@ body {
 .mtk15 { color: #ff8a80; } /* Python keywords in TTP */
 .mtk16 { color: #b39ddb; } /* TTP comments {# #} */
 
+/* File and workspace actions styling */
+.file-actions, .workspace-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.file-actions {
+    border-right: 1px solid #444;
+    padding-right: 12px;
+    margin-right: 8px;
+}
+
+.workspace-actions {
+    border-right: 1px solid #444;
+    padding-right: 12px;
+    margin-right: 8px;
+}
+
+.file-actions .btn, .workspace-actions .btn {
+    font-size: 12px;
+    padding: 6px 10px;
+    min-width: auto;
+}
+
+.file-actions .btn:hover, .workspace-actions .btn:hover {
+    background-color: #4a5568;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Notification system */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    min-width: 300px;
+    max-width: 500px;
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease-out;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+}
+
+.notification-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.notification-message {
+    flex: 1;
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: #a0aec0;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.notification-close:hover {
+    background-color: #4a5568;
+    color: #e2e8f0;
+}
+
+.notification-success {
+    border-left: 4px solid #48bb78;
+}
+
+.notification-error {
+    border-left: 4px solid #f56565;
+}
+
+.notification-warning {
+    border-left: 4px solid #ed8936;
+}
+
+.notification-info {
+    border-left: 4px solid #4299e1;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 /* Template pane error indicator */
 .template-pane.has-error {
     border: 2px solid #ff4444;

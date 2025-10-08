@@ -1843,8 +1843,14 @@ class TTPEditor {
         this.elements.saveWorkspaceBtn.addEventListener('click', () => {
             const name = prompt('Enter workspace name:', 'workspace_' + Date.now());
             if (name) {
-                this.saveWorkspace(name);
-                this.updateStatus(`Workspace '${name}' saved`);
+                try {
+                    this.saveWorkspace(name);
+                    this.updateStatus(`✅ Workspace '${name}' saved`);
+                    this.showNotification(`Workspace '${name}' saved successfully!`, 'success');
+                } catch (error) {
+                    this.updateStatus(`❌ Failed to save workspace: ${error.message}`);
+                    this.showNotification(`Failed to save workspace: ${error.message}`, 'error');
+                }
             }
         });
 
@@ -1861,14 +1867,21 @@ class TTPEditor {
             }
 
             if (workspaces.length === 0) {
-                alert('No saved workspaces found');
+                this.updateStatus('❌ No saved workspaces found');
+                this.showNotification('No saved workspaces found', 'warning');
                 return;
             }
 
             const name = prompt(`Enter workspace name to load:\n\nAvailable: ${workspaces.join(', ')}`);
             if (name) {
-                this.loadWorkspace(name);
-                this.updateStatus(`Workspace '${name}' loaded`);
+                try {
+                    this.loadWorkspace(name);
+                    this.updateStatus(`✅ Workspace '${name}' loaded`);
+                    this.showNotification(`Workspace '${name}' loaded successfully!`, 'success');
+                } catch (error) {
+                    this.updateStatus(`❌ Failed to load workspace: ${error.message}`);
+                    this.showNotification(`Failed to load workspace: ${error.message}`, 'error');
+                }
             }
         });
     }
@@ -1950,7 +1963,8 @@ class TTPEditor {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        this.updateStatus('Configuration exported successfully');
+        this.updateStatus('✅ Configuration exported successfully');
+        this.showNotification('Configuration exported successfully!', 'success');
         console.log('Configuration exported');
     }
 
@@ -1960,10 +1974,14 @@ class TTPEditor {
         // Validate file extension
         const fileName = file.name.toLowerCase();
         if (!fileName.endsWith('.ttp.export') && !fileName.endsWith('.json')) {
-            this.updateStatus('Please select a .ttp.export or .json file');
+            this.updateStatus('❌ Please select a .ttp.export or .json file');
+            this.showNotification('Please select a .ttp.export or .json file', 'error');
             console.error('Invalid file type. Expected .ttp.export or .json file');
             return;
         }
+
+        this.updateStatus('📁 Importing configuration...');
+        this.showNotification('Importing configuration...', 'info');
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -1973,14 +1991,17 @@ class TTPEditor {
                 // Validate the configuration structure
                 if (this.validateImportedConfig(config)) {
                     this.applyConfiguration(config);
-                    this.updateStatus('Configuration imported successfully');
+                    this.updateStatus('✅ Configuration imported successfully');
+                    this.showNotification('Configuration imported successfully!', 'success');
                     console.log('Configuration imported:', config);
                 } else {
-                    this.updateStatus('Invalid configuration file format');
+                    this.updateStatus('❌ Invalid configuration file format');
+                    this.showNotification('Invalid configuration file format', 'error');
                     console.error('Invalid configuration file format');
                 }
             } catch (error) {
-                this.updateStatus('Error reading configuration file: ' + error.message);
+                this.updateStatus('❌ Error reading configuration file: ' + error.message);
+                this.showNotification('Error reading configuration file: ' + error.message, 'error');
                 console.error('Error reading configuration file:', error);
             }
         };
@@ -3103,6 +3124,46 @@ timezone: UTC`;
         if (this.elements.statusBar) {
             this.elements.statusBar.textContent = message;
         }
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${this.getNotificationIcon(type)}</span>
+                <span class="notification-message">${message}</span>
+                <button class="notification-close">&times;</button>
+            </div>
+        `;
+
+        // Add to page
+        document.body.appendChild(notification);
+
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 4000);
+
+        // Close button functionality
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        });
+    }
+
+    getNotificationIcon(type) {
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
+        };
+        return icons[type] || icons.info;
     }
 
     hideLoadingOverlay() {

@@ -27,10 +27,22 @@
                 <button id="functionsBtn" class="btn btn-secondary">Functions</button>
                 <button id="lookupsBtn" class="btn btn-secondary">Lookups</button>
                 <button id="shareBtn" class="btn btn-secondary" style="display: none;">Share</button>
-                <button id="exportBtn" class="btn btn-secondary">Export</button>
-                <button id="importBtn" class="btn btn-secondary">Import</button>
-                <button id="saveWorkspaceBtn" class="btn btn-secondary">Save</button>
-                <button id="loadWorkspaceBtn" class="btn btn-secondary">Load</button>
+                <div class="file-actions">
+                    <button id="exportBtn" class="btn btn-secondary" title="Export current configuration as .ttp.export file">
+                        💾 Export
+                    </button>
+                    <button id="importBtn" class="btn btn-secondary" title="Import .ttp.export or .json configuration file">
+                        📁 Import
+                    </button>
+                </div>
+                <div class="workspace-actions">
+                    <button id="saveWorkspaceBtn" class="btn btn-secondary" title="Save current workspace to browser storage">
+                        💾 Save Workspace
+                    </button>
+                    <button id="loadWorkspaceBtn" class="btn btn-secondary" title="Load saved workspace from browser storage">
+                        📂 Load Workspace
+                    </button>
+                </div>
                 <a href="https://ttp.readthedocs.io/en/latest/" target="_blank" class="btn btn-secondary" id="docsBtn" title="TTP Documentation (v3.8.4)">📚 Docs</a>
                 <label class="auto-process-toggle">
                     <input type="checkbox" id="autoProcess" checked>
