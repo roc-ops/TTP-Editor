@@ -12,6 +12,7 @@ body {
     min-height: 100vh;
     margin: 0;
     padding: 0;
+    padding-bottom: 40px; /* Make room for status bar */
 }
 
 .container {
@@ -1474,7 +1475,7 @@ body {
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid #4a5568;
-    z-index: 1000;
+    z-index: 9999;
 }
 
 .status-left {

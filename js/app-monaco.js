@@ -1611,12 +1611,6 @@ class TTPEditor {
         await this.ttpProcessor.initialize();
         
         // Update version info in status bar
-        console.log('Status bar elements:', {
-            statusBar: !!this.elements.statusBar,
-            statusMessage: !!this.elements.statusMessage,
-            pythonVersion: !!this.elements.pythonVersion,
-            ttpVersion: !!this.elements.ttpVersion
-        });
         this.updateVersionInfo();
         
         this.setupResultEditor();
@@ -4367,41 +4361,27 @@ timezone: UTC`;
 
     // Status Bar Methods
     updateStatusMessage(message) {
-        console.log('updateStatusMessage called:', message);
         if (this.elements.statusMessage) {
             this.elements.statusMessage.textContent = message;
-            console.log('Status message updated to:', this.elements.statusMessage.textContent);
-        } else {
-            console.warn('statusMessage element not found');
         }
     }
 
     async updateVersionInfo() {
-        console.log('updateVersionInfo called');
         if (!this.ttpProcessor || !this.ttpProcessor.isReady()) {
-            console.log('TTP processor not ready, skipping version update');
             return;
         }
 
         try {
             // Get Python version
             const pythonVersion = await this.ttpProcessor.getPythonVersion();
-            console.log('Python version retrieved:', pythonVersion);
             if (this.elements.pythonVersion && pythonVersion) {
                 this.elements.pythonVersion.textContent = `Python: ${pythonVersion}`;
-                console.log('Python version element updated');
-            } else {
-                console.warn('Python version element not found or version is null');
             }
 
             // Get TTP version
             const ttpVersion = await this.ttpProcessor.getTTPVersion();
-            console.log('TTP version retrieved:', ttpVersion);
             if (this.elements.ttpVersion && ttpVersion) {
                 this.elements.ttpVersion.textContent = `TTP: ${ttpVersion}`;
-                console.log('TTP version element updated');
-            } else {
-                console.warn('TTP version element not found or version is null');
             }
         } catch (error) {
             console.warn('Failed to get version info:', error);
