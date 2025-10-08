@@ -1640,7 +1640,7 @@ class TTPEditor {
             clearLookupsBtn: document.getElementById('clearLookupsBtn'),
             cancelLookupsBtn: document.getElementById('cancelLookupsBtn'),
             // URL/Sharing elements
-            shareBtn: document.getElementById('shareBtn'),
+            shareBtn: document.getElementById('shareBtn'), // May be null if hidden
             exportBtn: document.getElementById('exportBtn'),
             importBtn: document.getElementById('importBtn'),
             importFile: document.getElementById('importFile'),
@@ -1829,15 +1829,17 @@ class TTPEditor {
     }
 
     setupURLSharing() {
-        // Share button
-        this.elements.shareBtn.addEventListener('click', async () => {
-            const success = await this.copyShareableURL();
-            if (success) {
-                this.updateStatus('Shareable URL copied to clipboard!');
-            } else {
-                this.updateStatus('Failed to copy URL to clipboard');
-            }
-        });
+        // Share button (if it exists)
+        if (this.elements.shareBtn) {
+            this.elements.shareBtn.addEventListener('click', async () => {
+                const success = await this.copyShareableURL();
+                if (success) {
+                    this.updateStatus('Shareable URL copied to clipboard!');
+                } else {
+                    this.updateStatus('Failed to copy URL to clipboard');
+                }
+            });
+        }
 
         // Save workspace button
         this.elements.saveWorkspaceBtn.addEventListener('click', () => {
@@ -1848,6 +1850,15 @@ class TTPEditor {
         this.elements.loadWorkspaceBtn.addEventListener('click', () => {
             this.showLoadWorkspaceModal();
         });
+
+        // Manage workspaces button
+        this.elements.manageWorkspacesBtn = document.getElementById('manageWorkspacesBtn');
+        this.elements.manageWorkspacesBtn.addEventListener('click', () => {
+            this.showManageWorkspacesModal();
+        });
+
+        // Setup dropdown functionality
+        this.setupDropdowns();
     }
 
     setupExportImport() {
@@ -3314,6 +3325,175 @@ timezone: UTC`;
             closeBtn.removeEventListener('click', this.loadModalEvents.handleClose);
             modal.removeEventListener('click', this.loadModalEvents.handleBackdrop);
             delete this.loadModalEvents;
+        }
+    }
+
+    // Dropdown functionality
+    setupDropdowns() {
+        const dropdowns = document.querySelectorAll('.dropdown');
+        
+        dropdowns.forEach(dropdown => {
+            const toggle = dropdown.querySelector('.dropdown-toggle');
+            
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleDropdown(dropdown);
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown')) {
+                this.closeAllDropdowns();
+            }
+        });
+
+        // Close dropdowns on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeAllDropdowns();
+            }
+        });
+    }
+
+    toggleDropdown(dropdown) {
+        const isOpen = dropdown.classList.contains('open');
+        
+        // Close all other dropdowns
+        this.closeAllDropdowns();
+        
+        // Toggle this dropdown
+        if (!isOpen) {
+            dropdown.classList.add('open');
+        }
+    }
+
+    closeAllDropdowns() {
+        document.querySelectorAll('.dropdown.open').forEach(dropdown => {
+            dropdown.classList.remove('open');
+        });
+    }
+
+    // Manage workspaces modal
+    showManageWorkspacesModal() {
+        const modal = document.getElementById('manageWorkspacesModal');
+        const workspaceList = document.getElementById('manageWorkspaceList');
+        
+        // Get list of saved workspaces
+        const workspaces = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('ttp_workspace_')) {
+                const name = key.replace('ttp_workspace_', '');
+                const data = JSON.parse(localStorage.getItem(key));
+                workspaces.push({
+                    name: name,
+                    timestamp: data.timestamp || 'Unknown date',
+                    key: key
+                });
+            }
+        }
+
+        if (workspaces.length === 0) {
+            this.updateStatus('❌ No saved workspaces found');
+            this.showNotification('No saved workspaces found', 'warning');
+            return;
+        }
+
+        // Sort by timestamp (newest first)
+        workspaces.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        // Populate workspace list
+        workspaceList.innerHTML = '';
+        workspaces.forEach(workspace => {
+            const item = document.createElement('div');
+            item.className = 'workspace-item';
+            item.innerHTML = `
+                <div class="workspace-name">${workspace.name}</div>
+                <div class="workspace-date">${new Date(workspace.timestamp).toLocaleDateString()}</div>
+            `;
+            item.addEventListener('click', () => {
+                // Toggle selection
+                item.classList.toggle('selected');
+                // Update delete button state
+                const hasSelection = workspaceList.querySelector('.workspace-item.selected');
+                document.getElementById('manageWorkspaceDelete').disabled = !hasSelection;
+            });
+            workspaceList.appendChild(item);
+        });
+
+        // Show modal
+        modal.classList.add('show');
+        
+        // Add event listeners
+        this.setupManageWorkspacesModalEvents();
+    }
+
+    setupManageWorkspacesModalEvents() {
+        const modal = document.getElementById('manageWorkspacesModal');
+        const deleteBtn = document.getElementById('manageWorkspaceDelete');
+        const cancelBtn = document.getElementById('manageWorkspaceCancel');
+        const closeBtn = modal.querySelector('.modal-close');
+
+        const closeModal = () => {
+            modal.classList.remove('show');
+            this.removeManageWorkspacesModalEvents();
+        };
+
+        const handleDelete = () => {
+            const selectedItems = modal.querySelectorAll('.workspace-item.selected');
+            if (selectedItems.length === 0) return;
+
+            const workspaceNames = Array.from(selectedItems).map(item => 
+                item.querySelector('.workspace-name').textContent
+            );
+
+            if (confirm(`Are you sure you want to delete ${workspaceNames.length} workspace(s)?\n\n${workspaceNames.join('\n')}`)) {
+                try {
+                    selectedItems.forEach(item => {
+                        const name = item.querySelector('.workspace-name').textContent;
+                        localStorage.removeItem(`ttp_workspace_${name}`);
+                    });
+                    
+                    this.updateStatus(`✅ Deleted ${workspaceNames.length} workspace(s)`);
+                    this.showNotification(`Deleted ${workspaceNames.length} workspace(s)`, 'success');
+                    
+                    // Refresh the list
+                    this.showManageWorkspacesModal();
+                } catch (error) {
+                    this.updateStatus(`❌ Failed to delete workspaces: ${error.message}`);
+                    this.showNotification(`Failed to delete workspaces: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        // Event listeners
+        deleteBtn.addEventListener('click', handleDelete);
+        cancelBtn.addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', closeModal);
+        
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Escape key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
+        });
+
+        // Store references for cleanup
+        this.manageModalEvents = { deleteBtn, cancelBtn, closeBtn, modal, handleDelete, handleClose: closeModal };
+    }
+
+    removeManageWorkspacesModalEvents() {
+        if (this.manageModalEvents) {
+            const { deleteBtn, cancelBtn, closeBtn, modal } = this.manageModalEvents;
+            deleteBtn.removeEventListener('click', this.manageModalEvents.handleDelete);
+            cancelBtn.removeEventListener('click', this.manageModalEvents.handleClose);
+            closeBtn.removeEventListener('click', this.manageModalEvents.handleClose);
+            modal.removeEventListener('click', this.manageModalEvents.handleBackdrop);
+            delete this.manageModalEvents;
         }
     }
 

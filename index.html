@@ -14,40 +14,71 @@
                 <h1>TTP Template Editor</h1>
             </div>
             <div class="header-controls">
-                <button id="processBtn" class="btn btn-primary">Process Template</button>
-                <button id="clearBtn" class="btn btn-secondary">Clear All</button>
-                <button id="exampleBtn" class="btn btn-secondary">Load Example</button>
-                <button id="downloadBtn" class="btn btn-secondary">Download Result</button>
-                <select id="outputFormat" class="format-select">
-                    <option value="json">JSON</option>
-                    <option value="yaml">YAML</option>
-                    <option value="table">Table</option>
-                </select>
-                <button id="globalVarsBtn" class="btn btn-secondary">Vars</button>
-                <button id="functionsBtn" class="btn btn-secondary">Functions</button>
-                <button id="lookupsBtn" class="btn btn-secondary">Lookups</button>
-                <button id="shareBtn" class="btn btn-secondary" style="display: none;">Share</button>
-                <div class="file-actions">
-                    <button id="exportBtn" class="btn btn-secondary" title="Export current configuration as .ttp.export file">
-                        💾 Export
-                    </button>
-                    <button id="importBtn" class="btn btn-secondary" title="Import .ttp.export or .json configuration file">
-                        📁 Import
-                    </button>
+                <!-- Main Actions -->
+                <div class="main-actions">
+                    <button id="processBtn" class="btn btn-primary">Process</button>
+                    <button id="downloadBtn" class="btn btn-secondary">Download</button>
+                    <select id="outputFormat" class="format-select">
+                        <option value="json">JSON</option>
+                        <option value="yaml">YAML</option>
+                        <option value="table">Table</option>
+                    </select>
                 </div>
-                <div class="workspace-actions">
-                    <button id="saveWorkspaceBtn" class="btn btn-secondary" title="Save current workspace to browser storage">
-                        💾 Save Workspace
+
+                <!-- Actions Dropdown -->
+                <div class="dropdown">
+                    <button class="dropdown-toggle" title="Actions">
+                        ⚡ Actions
                     </button>
-                    <button id="loadWorkspaceBtn" class="btn btn-secondary" title="Load saved workspace from browser storage">
-                        📂 Load Workspace
-                    </button>
+                    <div class="dropdown-menu">
+                        <button id="clearBtn" class="dropdown-item">🗑️ Clear All</button>
+                        <button id="exampleBtn" class="dropdown-item">📝 Load Example</button>
+                    </div>
                 </div>
-                <a href="https://ttp.readthedocs.io/en/latest/" target="_blank" class="btn btn-secondary" id="docsBtn" title="TTP Documentation (v3.8.4)">📚 Docs</a>
-                <label class="auto-process-toggle">
-                    <input type="checkbox" id="autoProcess" checked>
-                    Auto Process
-                </label>
+
+                <!-- Configuration Dropdown -->
+                <div class="dropdown">
+                    <button class="dropdown-toggle" title="Configuration">
+                        ⚙️ Config
+                    </button>
+                    <div class="dropdown-menu">
+                        <button id="globalVarsBtn" class="dropdown-item">Variables</button>
+                        <button id="functionsBtn" class="dropdown-item">Functions</button>
+                        <button id="lookupsBtn" class="dropdown-item">Lookups</button>
+                    </div>
+                </div>
+
+                <!-- File Dropdown -->
+                <div class="dropdown">
+                    <button class="dropdown-toggle" title="File Operations">
+                        📁 File
+                    </button>
+                    <div class="dropdown-menu">
+                        <button id="exportBtn" class="dropdown-item">💾 Export</button>
+                        <button id="importBtn" class="dropdown-item">📂 Import</button>
+                    </div>
+                </div>
+
+                <!-- Workspace Dropdown -->
+                <div class="dropdown">
+                    <button class="dropdown-toggle" title="Workspace Management">
+                        💾 Workspace
+                    </button>
+                    <div class="dropdown-menu">
+                        <button id="saveWorkspaceBtn" class="dropdown-item">💾 Save</button>
+                        <button id="loadWorkspaceBtn" class="dropdown-item">📂 Load</button>
+                        <button id="manageWorkspacesBtn" class="dropdown-item">🔧 Manage</button>
+                    </div>
+                </div>
+
+                <!-- Right Side -->
+                <div class="header-right">
+                    <a href="https://ttp.readthedocs.io/en/latest/" target="_blank" class="btn btn-icon" id="docsBtn" title="TTP Documentation (v3.8.4)">📚</a>
+                    <label class="auto-process-toggle">
+                        <input type="checkbox" id="autoProcess" checked>
+                        <span>Auto</span>
+                    </label>
+                </div>
             </div>
         </header>
 
@@ -248,6 +279,26 @@
                     <div class="modal-actions">
                         <button id="loadWorkspaceConfirm" class="btn btn-primary" disabled>Load</button>
                         <button id="loadWorkspaceCancel" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Workspaces Modal -->
+        <div id="manageWorkspacesModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>🔧 Manage Workspaces</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Manage your saved workspaces:</p>
+                    <div id="manageWorkspaceList" class="workspace-list">
+                        <!-- Workspaces will be populated here -->
+                    </div>
+                    <div class="modal-actions">
+                        <button id="manageWorkspaceDelete" class="btn btn-danger" disabled>Delete Selected</button>
+                        <button id="manageWorkspaceCancel" class="btn btn-secondary">Close</button>
                     </div>
                 </div>
             </div>
