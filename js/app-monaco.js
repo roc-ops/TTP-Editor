@@ -195,6 +195,10 @@ class TTPEditor {
                 const isInExtend = currentContext === 'extend';
                 const isInExtendTag = /<extend[^>]*$/.test(textBefore);
                 
+                // Check if we're in a match variable context ({{ variable | }})
+                const isInMatchVariable = /{{[^}]*\|[^}]*$/.test(textBefore);
+                const isInMatchVariableStart = /{{[^}]*$/.test(textBefore);
+                
                 // Debug logging
                 console.log('TTP Completion Context:', {
                     currentContext,
@@ -209,7 +213,9 @@ class TTPEditor {
                     isInLookup,
                     isInLookupTag,
                     isInExtend,
-                    isInExtendTag
+                    isInExtendTag,
+                    isInMatchVariable,
+                    isInMatchVariableStart
                 });
 
                 const suggestions = [
@@ -768,8 +774,9 @@ class TTPEditor {
                         }
                     ] : []),
                     
-                    // TTP Action Functions (highest priority)
-                    { label: 'append', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Append provided string to the end of match result', sortText: '01', range: range },
+                    // TTP Action Functions (only in match variable context)
+                    ...(isInMatchVariable ? [
+                        { label: 'append', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Append provided string to the end of match result', sortText: '01', range: range },
                     { label: 'chain', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Add functions from chain variable', sortText: '02', range: range },
                     { label: 'copy', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Copy match value into another variable', sortText: '03', range: range },
                     { label: 'count', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Function to count matches', sortText: '04', range: range },
@@ -807,9 +814,11 @@ class TTPEditor {
                     { label: 'truncate', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Truncate match results', sortText: '36', range: range },
                     { label: 'unrange', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Unrange match result using given parameters', sortText: '37', range: range },
                     { label: 'uptimeparse', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Function to parse uptime string', sortText: '38', range: range },
-                    { label: 'void', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Always returns False on results validation, allowing to skip them', sortText: '39', range: range },
+                    { label: 'void', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Always returns False on results validation, allowing to skip them', sortText: '39', range: range }
+                    ] : []),
 
-                    // TTP Condition Functions (high priority)
+                    // TTP Condition Functions (only in match variable context)
+                    ...(isInMatchVariable ? [
                     { label: 'equal', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Check if match is equal to provided value', sortText: '40', range: range },
                     { label: 'notequal', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Check if match is not equal to provided value', sortText: '41', range: range },
                     { label: 'startswith_re', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Checks if match starts with certain string using regular expression', sortText: '42', range: range },
@@ -825,10 +834,12 @@ class TTPEditor {
                     { label: 'greaterthan', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Checks if match is greater than given value', sortText: '52', range: range },
                     { label: 'lessthan', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Checks if match is less than given value', sortText: '53', range: range },
                     { label: 'is_ip', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Tries to convert match result to ipaddress object and returns True if so, False otherwise', sortText: '54', range: range },
-                    { label: 'cidr_match', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Transforms result to ipaddress object and checks if it overlaps with given prefix', sortText: '55', range: range },
+                    { label: 'cidr_match', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Transforms result to ipaddress object and checks if it overlaps with given prefix', sortText: '55', range: range }
+                    ] : []),
 
-                    // Python built-ins (lowest priority)
-                    { label: 'upper', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to uppercase', sortText: '90', range: range },
+                    // Python built-ins (only in match variable context)
+                    ...(isInMatchVariable ? [
+                        { label: 'upper', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to uppercase', sortText: '90', range: range },
                     { label: 'lower', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Convert to lowercase', sortText: '91', range: range },
                     { label: 'strip', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Strip whitespace', sortText: '92', range: range },
                     { label: 'split', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Split text by delimiter', sortText: '93', range: range },
@@ -903,6 +914,7 @@ class TTPEditor {
                     { label: 'remove', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Remove item', sortText: '162', range: range },
                     { label: 'reverse', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Reverse list', sortText: '163', range: range },
                     { label: 'sort', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Sort list', sortText: '164', range: range }
+                    ] : [])
                 ];
                 
                 // Add range to all suggestions
