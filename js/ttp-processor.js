@@ -704,7 +704,21 @@ def get_template_info(template_text):
 
     async getTTPVersion() {
         try {
-            if (!this.pyodide) {
+            if (!this.pyodide || !this.isInitialized) {
+                return null;
+            }
+            
+            // Check if TTP is available before trying to get version
+            const ttpAvailable = this.pyodide.runPython(`
+try:
+    import ttp
+    True
+except ImportError:
+    False
+`);
+            
+            if (!ttpAvailable) {
+                console.warn('TTP module not available yet');
                 return null;
             }
             

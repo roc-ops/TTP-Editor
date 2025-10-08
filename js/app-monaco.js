@@ -1920,12 +1920,12 @@ class TTPEditor {
 
     setupDocumentation() {
         // Update documentation button with TTP version when processor is ready
-        if (this.ttpProcessor) {
+        if (this.ttpProcessor && this.ttpProcessor.isReady()) {
             this.updateDocumentationVersion();
         } else {
-            // Wait for processor to be initialized
+            // Wait for processor to be initialized and ready
             const checkProcessor = () => {
-                if (this.ttpProcessor) {
+                if (this.ttpProcessor && this.ttpProcessor.isReady()) {
                     this.updateDocumentationVersion();
                 } else {
                     setTimeout(checkProcessor, 100);
@@ -1943,6 +1943,10 @@ class TTPEditor {
                 this.elements.docsBtn.title = `TTP Documentation (v${version})`;
                 this.elements.docsBtn.href = `https://ttp.readthedocs.io/en/latest/`;
                 console.log(`TTP version detected: ${version}`);
+            } else if (this.elements.docsBtn) {
+                // Fallback if version is not available
+                this.elements.docsBtn.title = 'TTP Documentation';
+                this.elements.docsBtn.href = 'https://ttp.readthedocs.io/en/latest/';
             }
         } catch (error) {
             console.warn('Could not get TTP version:', error);
