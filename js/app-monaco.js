@@ -222,6 +222,9 @@ class TTPEditor {
                 const isInXMLTagName = /<\w*$/.test(textBefore);
                 const isInXMLAttribute = /<\w+[^>]*\s+\w*$/.test(textBefore);
                 
+                // More comprehensive XML tag detection - includes partial tag names
+                const isInPartialXMLTag = /<\w+$/.test(textBefore) || /<\w*$/.test(textBefore);
+                
                 // Debug logging
                 console.log('TTP Completion Context:', {
                     currentContext,
@@ -238,7 +241,10 @@ class TTPEditor {
                     isInExtend,
                     isInExtendTag,
                     isInMatchVariable,
-                    isInMatchVariableStart
+                    isInMatchVariableStart,
+                    isTypingXMLTag,
+                    isInXMLTagName,
+                    isInPartialXMLTag
                 });
 
                 const suggestions = [
@@ -1367,7 +1373,7 @@ class TTPEditor {
                     ] : []),
                     
                     // XML tag completion (when typing XML tags)
-                    ...(isInXMLTagName ? [
+                    ...(isInPartialXMLTag ? [
                         { label: 'template', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP template tag', sortText: '001', range: range },
                         { label: 'group', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP group tag', sortText: '002', range: range },
                         { label: 'input', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP input tag', sortText: '003', range: range },
