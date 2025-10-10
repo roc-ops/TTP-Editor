@@ -1813,6 +1813,9 @@ class TTPEditor {
             // Clear error markers when template changes
             this.clearErrorMarkers();
         });
+        
+        // Initialize vars editor
+        this.initializeVarsEditor();
     }
 
     setupResultEditor() {
@@ -2138,6 +2141,12 @@ class TTPEditor {
     initializeVarsEditor() {
         if (this.varsEditor) {
             return; // Already initialized
+        }
+        
+        // Ensure the vars editor element exists
+        if (!this.elements.varsEditor) {
+            console.warn('Vars editor element not found');
+            return;
         }
         
         // Default JSON content
