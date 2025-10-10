@@ -225,23 +225,27 @@ class TTPEditor {
                 // More comprehensive XML tag detection - includes partial tag names
                 const isInPartialXMLTag = /<\w*$/.test(textBefore);
                 
+                // Check if we're typing a closing tag (</)
+                const isTypingClosingTag = /<\/\w*$/.test(textBefore);
+                
                 // Debug logging - expanded to see all values
                 console.log('TTP Completion Context:');
                 console.log('  currentContext:', currentContext);
                 console.log('  isInGroup:', isInGroup);
                 console.log('  isInGroupTag:', isInGroupTag);
                 console.log('  isInPartialXMLTag:', isInPartialXMLTag);
+                console.log('  isTypingClosingTag:', isTypingClosingTag);
                 console.log('  isTypingXMLTag:', isTypingXMLTag);
                 console.log('  isInXMLTagName:', isInXMLTagName);
                 console.log('  textBefore (last 20):', textBefore.slice(-20));
                 console.log('  regex /<\\w*$/ test:', /<\w*$/.test(textBefore));
 
                 const suggestions = [
-                    // TTP template structure (only when not in an existing tag AND not typing XML tags)
-                    ...(!isInGroupTag && !isInInputTag && !isInOutputTag && !isInTemplateTag && !isInLookupTag && !isInExtendTag && !isInPartialXMLTag ? [
+                    // TTP template structure (only when not in an existing tag AND not typing XML tags AND not typing closing tags)
+                    ...(!isInGroupTag && !isInInputTag && !isInOutputTag && !isInTemplateTag && !isInLookupTag && !isInExtendTag && !isInPartialXMLTag && !isTypingClosingTag ? [
                         {
                             label: 'template',
-                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
                             insertText: 'template name="${1:template_name}">\n  ${2:template_content}\n</template>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP template definition',
@@ -249,7 +253,7 @@ class TTPEditor {
                         },
                         {
                             label: 'group',
-                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
                             insertText: 'group name="${1:group_name}">\n  ${2:group_content}\n</group>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP group definition',
@@ -257,7 +261,7 @@ class TTPEditor {
                         },
                         {
                             label: 'macro',
-                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
                             insertText: 'macro>\n  def ${1:function_name}(data):\n    # Process data here\n    return data\n</macro>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP macro definition',
@@ -265,7 +269,7 @@ class TTPEditor {
                         },
                         {
                             label: 'input',
-                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
                             insertText: 'input name="${1:input_name}" load="${2:text}">\n  ${3:input_data}\n</input>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP input definition',
@@ -273,7 +277,7 @@ class TTPEditor {
                         },
                         {
                             label: 'output',
-                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
                             insertText: 'output name="${1:output_name}" format="${2:yaml}">\n  ${3:output_config}\n</output>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP output definition',
@@ -281,7 +285,7 @@ class TTPEditor {
                         },
                         {
                             label: 'lookup',
-                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
                             insertText: 'lookup name="${1:lookup_name}" load="${2:text}">\n  ${3:lookup_data}\n</lookup>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP lookup table definition',
@@ -289,7 +293,7 @@ class TTPEditor {
                         },
                         {
                             label: 'extend',
-                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
                             insertText: 'extend template="${1:template_name}" name="${2:extend_name}">\n  ${3:extend_content}\n</extend>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP extend definition',
@@ -1363,13 +1367,45 @@ class TTPEditor {
                     
                     // XML tag completion (when typing XML tags)
                     ...(isInPartialXMLTag ? [
-                        { label: 'template', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP template tag', sortText: '001', insertText: 'template', range: range },
-                        { label: 'group', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP group tag', sortText: '002', insertText: 'group', range: range },
-                        { label: 'input', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP input tag', sortText: '003', insertText: 'input', range: range },
-                        { label: 'output', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP output tag', sortText: '004', insertText: 'output', range: range },
-                        { label: 'lookup', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP lookup tag', sortText: '005', insertText: 'lookup', range: range },
-                        { label: 'extend', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP extend tag', sortText: '006', insertText: 'extend', range: range },
-                        { label: 'macro', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP macro tag', sortText: '007', insertText: 'macro', range: range }
+                        // Context-aware completion: show different tags based on current context
+                        ...(currentContext === 'template' ? [
+                            // Inside template: only show group, input, output, lookup, extend, macro
+                            { label: 'group', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP group tag', sortText: '001', insertText: 'group', range: range },
+                            { label: 'input', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP input tag', sortText: '002', insertText: 'input', range: range },
+                            { label: 'output', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP output tag', sortText: '003', insertText: 'output', range: range },
+                            { label: 'lookup', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP lookup tag', sortText: '004', insertText: 'lookup', range: range },
+                            { label: 'extend', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP extend tag', sortText: '005', insertText: 'extend', range: range },
+                            { label: 'macro', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP macro tag', sortText: '006', insertText: 'macro', range: range }
+                        ] : [
+                            // Outside any tag: show all tags
+                            { label: 'template', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP template tag', sortText: '001', insertText: 'template', range: range },
+                            { label: 'group', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP group tag', sortText: '002', insertText: 'group', range: range },
+                            { label: 'input', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP input tag', sortText: '003', insertText: 'input', range: range },
+                            { label: 'output', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP output tag', sortText: '004', insertText: 'output', range: range },
+                            { label: 'lookup', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP lookup tag', sortText: '005', insertText: 'lookup', range: range },
+                            { label: 'extend', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP extend tag', sortText: '006', insertText: 'extend', range: range },
+                            { label: 'macro', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP macro tag', sortText: '007', insertText: 'macro', range: range }
+                        ])
+                    ] : []),
+                    
+                    // Closing tag completion (when typing </)
+                    ...(isTypingClosingTag ? [
+                        ...(currentContext ? [{
+                            label: `/${currentContext}`,
+                            kind: window.MonacoLanguages.CompletionItemKind.Keyword,
+                            documentation: `Close ${currentContext} tag`,
+                            sortText: '000',
+                            insertText: currentContext,
+                            range: range
+                        }] : [
+                            { label: '/template', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'Close template tag', sortText: '001', insertText: 'template', range: range },
+                            { label: '/group', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'Close group tag', sortText: '002', insertText: 'group', range: range },
+                            { label: '/input', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'Close input tag', sortText: '003', insertText: 'input', range: range },
+                            { label: '/output', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'Close output tag', sortText: '004', insertText: 'output', range: range },
+                            { label: '/lookup', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'Close lookup tag', sortText: '005', insertText: 'lookup', range: range },
+                            { label: '/extend', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'Close extend tag', sortText: '006', insertText: 'extend', range: range },
+                            { label: '/macro', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'Close macro tag', sortText: '007', insertText: 'macro', range: range }
+                        ])
                     ] : [])
                 ];
                 
