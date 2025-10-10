@@ -1363,13 +1363,13 @@ class TTPEditor {
                     
                     // XML tag completion (when typing XML tags)
                     ...(isInPartialXMLTag ? [
-                        { label: 'template', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP template tag', sortText: '001', range: range },
-                        { label: 'group', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP group tag', sortText: '002', range: range },
-                        { label: 'input', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP input tag', sortText: '003', range: range },
-                        { label: 'output', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP output tag', sortText: '004', range: range },
-                        { label: 'lookup', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP lookup tag', sortText: '005', range: range },
-                        { label: 'extend', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP extend tag', sortText: '006', range: range },
-                        { label: 'macro', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP macro tag', sortText: '007', range: range }
+                        { label: 'template', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP template tag', sortText: '001', insertText: 'template', range: range },
+                        { label: 'group', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP group tag', sortText: '002', insertText: 'group', range: range },
+                        { label: 'input', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP input tag', sortText: '003', insertText: 'input', range: range },
+                        { label: 'output', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP output tag', sortText: '004', insertText: 'output', range: range },
+                        { label: 'lookup', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP lookup tag', sortText: '005', insertText: 'lookup', range: range },
+                        { label: 'extend', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP extend tag', sortText: '006', insertText: 'extend', range: range },
+                        { label: 'macro', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP macro tag', sortText: '007', insertText: 'macro', range: range }
                     ] : [])
                 ];
                 
