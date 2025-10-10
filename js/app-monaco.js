@@ -241,11 +241,12 @@ class TTPEditor {
                 console.log('  regex /<\\w*$/ test:', /<\w*$/.test(textBefore));
 
                 const suggestions = [
-                    // TTP template structure (only when not in an existing tag AND not typing XML tags AND not typing closing tags)
-                    ...(!isInGroupTag && !isInInputTag && !isInOutputTag && !isInTemplateTag && !isInLookupTag && !isInExtendTag && !isInPartialXMLTag && !isTypingClosingTag ? [
+                    // TTP template structure (only when not in an existing tag AND not typing closing tags)
+                    // Note: Allow snippets even when typing XML tags - they should appear after XML completion
+                    ...(!isInGroupTag && !isInInputTag && !isInOutputTag && !isInTemplateTag && !isInLookupTag && !isInExtendTag && !isTypingClosingTag ? [
                         {
                             label: 'template',
-                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
+                            kind: window.MonacoLanguages.CompletionItemKind.Text,
                             insertText: 'template name="${1:template_name}">\n  ${2:template_content}\n</template>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP template definition',
@@ -253,7 +254,7 @@ class TTPEditor {
                         },
                         {
                             label: 'group',
-                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
+                            kind: window.MonacoLanguages.CompletionItemKind.Text,
                             insertText: 'group name="${1:group_name}">\n  ${2:group_content}\n</group>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP group definition',
@@ -261,7 +262,7 @@ class TTPEditor {
                         },
                         {
                             label: 'macro',
-                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
+                            kind: window.MonacoLanguages.CompletionItemKind.Text,
                             insertText: 'macro>\n  def ${1:function_name}(data):\n    # Process data here\n    return data\n</macro>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP macro definition',
@@ -269,7 +270,7 @@ class TTPEditor {
                         },
                         {
                             label: 'input',
-                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
+                            kind: window.MonacoLanguages.CompletionItemKind.Text,
                             insertText: 'input name="${1:input_name}" load="${2:text}">\n  ${3:input_data}\n</input>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP input definition',
@@ -277,7 +278,7 @@ class TTPEditor {
                         },
                         {
                             label: 'output',
-                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
+                            kind: window.MonacoLanguages.CompletionItemKind.Text,
                             insertText: 'output name="${1:output_name}" format="${2:yaml}">\n  ${3:output_config}\n</output>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP output definition',
@@ -285,7 +286,7 @@ class TTPEditor {
                         },
                         {
                             label: 'lookup',
-                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
+                            kind: window.MonacoLanguages.CompletionItemKind.Text,
                             insertText: 'lookup name="${1:lookup_name}" load="${2:text}">\n  ${3:lookup_data}\n</lookup>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP lookup table definition',
@@ -293,7 +294,7 @@ class TTPEditor {
                         },
                         {
                             label: 'extend',
-                            kind: window.MonacoLanguages.CompletionItemKind.Snippet,
+                            kind: window.MonacoLanguages.CompletionItemKind.Text,
                             insertText: 'extend template="${1:template_name}" name="${2:extend_name}">\n  ${3:extend_content}\n</extend>',
                             insertTextRules: window.MonacoLanguages.CompletionItemInsertTextRule.InsertAsSnippet,
                             documentation: 'TTP extend definition',
