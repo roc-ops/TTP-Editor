@@ -72,8 +72,8 @@ class TTPEditor {
                 { open: '[', close: ']' },
                 { open: '(', close: ')' },
                 { open: '"', close: '"' },
-                { open: "'", close: "'" }
-                // Note: Intentionally not including XML auto-closing pairs to avoid conflicts with snippets
+                { open: "'", close: "'" },
+                { open: '<', close: '>' }
             ],
             surroundingPairs: [
                 { open: '{', close: '}' },
@@ -83,8 +83,8 @@ class TTPEditor {
                 { open: '"', close: '"' },
                 { open: "'", close: "'" }
             ],
-            // Disable auto-closing for XML tags
-            autoClosingBrackets: 'never',
+            // Enable auto-closing for XML tags
+            autoClosingBrackets: 'languageDefined',
             autoClosingQuotes: 'languageDefined'
         });
 
@@ -216,6 +216,11 @@ class TTPEditor {
                 // Check if we're in a match variable context ({{ variable | }})
                 const isInMatchVariable = /{{[^}]*\|[^}]*$/.test(textBefore);
                 const isInMatchVariableStart = /{{[^}]*$/.test(textBefore);
+                
+                // Check if we're typing an XML tag (after < but before >)
+                const isTypingXMLTag = /<[^>]*$/.test(textBefore);
+                const isInXMLTagName = /<\w*$/.test(textBefore);
+                const isInXMLAttribute = /<\w+[^>]*\s+\w*$/.test(textBefore);
                 
                 // Debug logging
                 console.log('TTP Completion Context:', {
@@ -1359,6 +1364,17 @@ class TTPEditor {
                     { label: 'remove', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Remove item', sortText: '162', range: range },
                     { label: 'reverse', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Reverse list', sortText: '163', range: range },
                     { label: 'sort', kind: window.MonacoLanguages.CompletionItemKind.Function, documentation: 'Sort list', sortText: '164', range: range }
+                    ] : []),
+                    
+                    // XML tag completion (when typing XML tags)
+                    ...(isInXMLTagName ? [
+                        { label: 'template', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP template tag', sortText: '001', range: range },
+                        { label: 'group', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP group tag', sortText: '002', range: range },
+                        { label: 'input', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP input tag', sortText: '003', range: range },
+                        { label: 'output', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP output tag', sortText: '004', range: range },
+                        { label: 'lookup', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP lookup tag', sortText: '005', range: range },
+                        { label: 'extend', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP extend tag', sortText: '006', range: range },
+                        { label: 'macro', kind: window.MonacoLanguages.CompletionItemKind.Keyword, documentation: 'TTP macro tag', sortText: '007', range: range }
                     ] : [])
                 ];
                 
@@ -1737,12 +1753,11 @@ class TTPEditor {
             renderWhitespace: 'selection',
             fontSize: 13,
             fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-            // Disable auto-closing for XML tags to prevent conflicts with snippets
-            autoClosingBrackets: 'never',
+            // Enable auto-closing for XML tags and other brackets
+            autoClosingBrackets: 'languageDefined',
             autoClosingQuotes: 'languageDefined',
-            // Additional settings to prevent auto-closing
-            autoClosingOvertype: 'never',
-            autoSurround: 'never',
+            autoClosingOvertype: 'always',
+            autoSurround: 'languageDefined',
             tabSize: 2,
             insertSpaces: true
         });
