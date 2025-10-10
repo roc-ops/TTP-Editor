@@ -1373,6 +1373,10 @@ class TTPEditor {
                     ] : [])
                 ];
                 
+                // Debug: Log raw suggestions before validation
+                console.log('Raw suggestions count:', suggestions.length);
+                console.log('isInPartialXMLTag for XML completion:', isInPartialXMLTag);
+                
                 // Validate and clean suggestions
                 const validSuggestions = suggestions.filter(suggestion => {
                     // Ensure all required properties exist
