@@ -244,7 +244,8 @@ class TTPEditor {
                     isInMatchVariableStart,
                     isTypingXMLTag,
                     isInXMLTagName,
-                    isInPartialXMLTag
+                    isInPartialXMLTag,
+                    textBefore: textBefore.slice(-20) // Show last 20 characters for debugging
                 });
 
                 const suggestions = [
