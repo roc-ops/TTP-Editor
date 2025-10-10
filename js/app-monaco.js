@@ -2044,6 +2044,8 @@ class TTPEditor {
             timestamp: new Date().toISOString(),
             version: '1.0'
         };
+        
+        console.log('Exporting configuration:', config);
 
         const configString = JSON.stringify(config, null, 2);
         const blob = new Blob([configString], { type: 'application/json' });
@@ -2084,6 +2086,7 @@ class TTPEditor {
                 
                 // Validate the configuration structure
                 if (this.validateImportedConfig(config)) {
+                    console.log('Importing configuration:', config);
                     this.applyConfiguration(config);
                     this.updateStatus('✅ Configuration imported successfully');
                     this.showNotification('Configuration imported successfully!', 'success');
@@ -2918,7 +2921,7 @@ timezone: UTC`;
             // Add processing time to result
             result.processingTime = processingTime;
             this.displayResults(result);
-            this.updateStatusMessage('Processing completed');
+            this.updateStatusMessage(`Processing completed (${processingTime}ms)`);
         } catch (error) {
             console.error('Processing error:', error);
             console.error('Error stack:', error.stack);
@@ -4606,11 +4609,16 @@ timezone: UTC`;
     }
 
     applyVariables(vars) {
+        console.log('Applying variables:', vars);
         if (typeof vars === 'object' && vars !== null) {
             // Convert to JSON string for the vars editor
             const varsString = JSON.stringify(vars, null, 2);
+            console.log('Vars string:', varsString);
             if (this.varsEditor) {
                 this.varsEditor.setValue(varsString);
+                console.log('Vars editor updated');
+            } else {
+                console.warn('Vars editor not available');
             }
         }
     }
