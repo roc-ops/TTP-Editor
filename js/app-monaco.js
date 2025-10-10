@@ -225,28 +225,16 @@ class TTPEditor {
                 // More comprehensive XML tag detection - includes partial tag names
                 const isInPartialXMLTag = /<\w*$/.test(textBefore);
                 
-                // Debug logging
-                console.log('TTP Completion Context:', {
-                    currentContext,
-                    isInGroup,
-                    isInGroupTag,
-                    isInOutput,
-                    isInOutputTag,
-                    isInInput,
-                    isInInputTag,
-                    isInTemplate,
-                    isInTemplateTag,
-                    isInLookup,
-                    isInLookupTag,
-                    isInExtend,
-                    isInExtendTag,
-                    isInMatchVariable,
-                    isInMatchVariableStart,
-                    isTypingXMLTag,
-                    isInXMLTagName,
-                    isInPartialXMLTag,
-                    textBefore: textBefore.slice(-20) // Show last 20 characters for debugging
-                });
+                // Debug logging - expanded to see all values
+                console.log('TTP Completion Context:');
+                console.log('  currentContext:', currentContext);
+                console.log('  isInGroup:', isInGroup);
+                console.log('  isInGroupTag:', isInGroupTag);
+                console.log('  isInPartialXMLTag:', isInPartialXMLTag);
+                console.log('  isTypingXMLTag:', isTypingXMLTag);
+                console.log('  isInXMLTagName:', isInXMLTagName);
+                console.log('  textBefore (last 20):', textBefore.slice(-20));
+                console.log('  regex /<\\w*$/ test:', /<\w*$/.test(textBefore));
 
                 const suggestions = [
                     // TTP template structure (only when not in an existing tag AND not typing XML tags)
