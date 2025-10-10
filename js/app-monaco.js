@@ -223,7 +223,7 @@ class TTPEditor {
                 const isInXMLAttribute = /<\w+[^>]*\s+\w*$/.test(textBefore);
                 
                 // More comprehensive XML tag detection - includes partial tag names
-                const isInPartialXMLTag = /<\w+$/.test(textBefore) || /<\w*$/.test(textBefore);
+                const isInPartialXMLTag = /<\w*$/.test(textBefore);
                 
                 // Debug logging
                 console.log('TTP Completion Context:', {
@@ -248,8 +248,8 @@ class TTPEditor {
                 });
 
                 const suggestions = [
-                    // TTP template structure (only when not in an existing tag)
-                    ...(!isInGroupTag && !isInInputTag && !isInOutputTag && !isInTemplateTag && !isInLookupTag && !isInExtendTag ? [
+                    // TTP template structure (only when not in an existing tag AND not typing XML tags)
+                    ...(!isInGroupTag && !isInInputTag && !isInOutputTag && !isInTemplateTag && !isInLookupTag && !isInExtendTag && !isInPartialXMLTag ? [
                         {
                             label: 'template',
                             kind: window.MonacoLanguages.CompletionItemKind.Keyword,
@@ -2971,15 +2971,15 @@ timezone: UTC`;
                     
                     // Validate that we have a template editor and model
                     if (this.templateEditor && this.templateEditor.getModel()) {
-                        const templateLines = this.templateEditor.getModel().getLineCount();
-                        
+                    const templateLines = this.templateEditor.getModel().getLineCount();
+                    
                         // Ensure line number is within valid range
                         let lineNumber = Math.max(0, Math.min(reportedLine - 1, templateLines - 1));
-                        
-                        // Only show error marker if we don't already have one
-                        if (!this.hasErrorMarker) {
-                            this.showErrorMarker(lineNumber, result.error.message);
-                            this.hasErrorMarker = true;
+                    
+                    // Only show error marker if we don't already have one
+                    if (!this.hasErrorMarker) {
+                        this.showErrorMarker(lineNumber, result.error.message);
+                        this.hasErrorMarker = true;
                         }
                     }
                 }
@@ -3022,7 +3022,7 @@ timezone: UTC`;
         
         // Add Monaco error marker only if template editor is available
         if (this.templateEditor && this.templateEditor.getModel()) {
-            this.addMonacoErrorMarker(lineNumber, message);
+        this.addMonacoErrorMarker(lineNumber, message);
         } else {
             console.warn('Template editor not available for error marking');
         }
@@ -3042,23 +3042,23 @@ timezone: UTC`;
             
             try {
                 const lineContent = model.getLineContent(validLineNumber);
-                const endColumn = lineContent.length + 1;
-                
-                // Add error marker using Monaco's decoration API
-                const decorations = [{
-                    range: {
+            const endColumn = lineContent.length + 1;
+            
+            // Add error marker using Monaco's decoration API
+            const decorations = [{
+                range: {
                         startLineNumber: validLineNumber,
-                        startColumn: 1,
+                    startColumn: 1,
                         endLineNumber: validLineNumber,
-                        endColumn: endColumn
-                    },
-                    options: {
-                        className: 'monaco-error-line',
-                        glyphMarginClassName: 'monaco-error-glyph',
-                        hoverMessage: { value: `Error: ${message}` }
-                    }
-                }];
-                
+                    endColumn: endColumn
+                },
+                options: {
+                    className: 'monaco-error-line',
+                    glyphMarginClassName: 'monaco-error-glyph',
+                    hoverMessage: { value: `Error: ${message}` }
+                }
+            }];
+            
                 const decorationIds = this.templateEditor.deltaDecorations([], decorations);
                 this.errorDecorationIds = decorationIds;
                 console.log(`Added error marker at line ${validLineNumber} (original: ${lineNumber + 1})`);
