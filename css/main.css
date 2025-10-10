@@ -12,12 +12,12 @@ body {
     min-height: 100vh;
     margin: 0;
     padding: 0;
-    padding-bottom: 40px; /* Make room for status bar */
+    padding-bottom: 50px; /* Make room for status bar */
 }
 
 .container {
     width: 100%;
-    height: 100vh;
+    height: calc(100vh - 50px); /* Account for fixed status bar */
     display: flex;
     flex-direction: column;
     overflow: hidden;
