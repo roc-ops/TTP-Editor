@@ -1776,7 +1776,8 @@ class TTPEditor {
         this.elements.dataInput.style.display = 'none';
 
         // Template editor
-        this.templateEditor = window.MonacoEditor.create(this.elements.templateInput.parentElement, {
+        const templateWrapper = this.elements.templateInput.parentElement;
+        this.templateEditor = window.MonacoEditor.create(templateWrapper, {
             value: this.elements.templateInput.value || '',
             language: 'ttp',
             theme: 'vs-dark',
@@ -1800,6 +1801,19 @@ class TTPEditor {
 
         // Hide original textarea
         this.elements.templateInput.style.display = 'none';
+        
+        // Ensure template editor wrapper has proper constraints
+        templateWrapper.style.width = '100%';
+        templateWrapper.style.maxWidth = '100%';
+        templateWrapper.style.overflow = 'hidden';
+        templateWrapper.style.boxSizing = 'border-box';
+        
+        // Force layout update after a short delay to ensure proper sizing
+        setTimeout(() => {
+            if (this.templateEditor) {
+                this.templateEditor.layout();
+            }
+        }, 100);
 
         // Add change listeners
         this.dataEditor.onDidChangeModelContent(() => {
@@ -1813,6 +1827,9 @@ class TTPEditor {
             // Clear error markers when template changes
             this.clearErrorMarkers();
         });
+        
+        // Setup word wrap toggles
+        this.setupWordWrapToggles();
         
         // Initialize vars editor
         this.initializeVarsEditor();
@@ -1848,6 +1865,43 @@ class TTPEditor {
         });
         
         console.log('Monaco result editor initialized with JSON folding and search support');
+        
+        // Setup word wrap toggle for result editor
+        this.setupResultWordWrapToggle();
+    }
+
+    setupWordWrapToggles() {
+        // Data editor word wrap toggle
+        const dataWordWrapCheckbox = document.getElementById('dataWordWrap');
+        if (dataWordWrapCheckbox && this.dataEditor) {
+            dataWordWrapCheckbox.addEventListener('change', (e) => {
+                this.dataEditor.updateOptions({
+                    wordWrap: e.target.checked ? 'on' : 'off'
+                });
+            });
+        }
+
+        // Template editor word wrap toggle
+        const templateWordWrapCheckbox = document.getElementById('templateWordWrap');
+        if (templateWordWrapCheckbox && this.templateEditor) {
+            templateWordWrapCheckbox.addEventListener('change', (e) => {
+                this.templateEditor.updateOptions({
+                    wordWrap: e.target.checked ? 'on' : 'off'
+                });
+            });
+        }
+    }
+
+    setupResultWordWrapToggle() {
+        // Result editor word wrap toggle
+        const resultWordWrapCheckbox = document.getElementById('resultWordWrap');
+        if (resultWordWrapCheckbox && this.resultEditor) {
+            resultWordWrapCheckbox.addEventListener('change', (e) => {
+                this.resultEditor.updateOptions({
+                    wordWrap: e.target.checked ? 'on' : 'off'
+                });
+            });
+        }
     }
 
     setupEventListeners() {
@@ -3059,7 +3113,17 @@ timezone: UTC`;
         // Add error indicator to the pane header
         const templateHeader = document.querySelector('.template-pane .panel-header');
         if (templateHeader) {
-            templateHeader.innerHTML = `<span class="panel-title">TTP Template <span style="color: #ff6666;">⚠ Error at line ${lineNumber + 1}</span></span>`;
+            // Preserve the checkbox - only update the title
+            const panelTitle = templateHeader.querySelector('.panel-title');
+            if (panelTitle) {
+                panelTitle.innerHTML = `TTP Template <span style="color: #ff6666;">⚠ Error at line ${lineNumber + 1}</span>`;
+            } else {
+                // Fallback if title doesn't exist
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'panel-title';
+                titleSpan.innerHTML = `TTP Template <span style="color: #ff6666;">⚠ Error at line ${lineNumber + 1}</span>`;
+                templateHeader.insertBefore(titleSpan, templateHeader.firstChild);
+            }
         }
         
         // Add Monaco error marker only if template editor is available
@@ -3124,7 +3188,17 @@ timezone: UTC`;
         // Restore normal header text
         const templateHeader = document.querySelector('.template-pane .panel-header');
         if (templateHeader) {
-            templateHeader.innerHTML = '<span class="panel-title">TTP Template</span>';
+            // Preserve the checkbox - only update the title
+            const panelTitle = templateHeader.querySelector('.panel-title');
+            if (panelTitle) {
+                panelTitle.textContent = 'TTP Template';
+            } else {
+                // Fallback if title doesn't exist
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'panel-title';
+                titleSpan.textContent = 'TTP Template';
+                templateHeader.insertBefore(titleSpan, templateHeader.firstChild);
+            }
         }
         
         // Clear Monaco error markers using stored decoration IDs
