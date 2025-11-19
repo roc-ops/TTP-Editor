@@ -228,6 +228,15 @@ body {
     background: #333333;
     border-bottom: 1px solid #404040;
     flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 100;
 }
 
 .panel-title {
@@ -236,11 +245,73 @@ body {
     color: #d1d5db;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 8px;
+}
+
+.word-wrap-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.word-wrap-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #d1d5db;
+}
+
+.word-wrap-toggle input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: #3b82f6;
+    cursor: pointer;
+    margin: 0;
+}
+
+.word-wrap-toggle span {
+    font-weight: 500;
 }
 
 .editor-wrapper {
     flex: 1;
     position: relative;
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* Ensure template pane header stays visible and above Monaco overlays */
+.template-pane .panel-header {
+    position: relative !important;
+    z-index: 1000 !important;
+    background: #333333 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure Monaco suggestions/widgets don't cover the header */
+.template-pane .monaco-editor .monaco-hover,
+.template-pane .monaco-editor .suggest-widget,
+.template-pane .monaco-editor .context-view {
+    z-index: 999 !important;
+}
+
+/* Prevent Monaco from covering the header */
+.template-pane .editor-wrapper {
+    position: relative;
+    z-index: 1;
     overflow: hidden;
 }
 
